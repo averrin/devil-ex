@@ -1,8 +1,9 @@
 {
     "locations": {
         "first": {
-            "visited": true,
-            "visits": 1
+            "visits": 1,
+            "visited": true
         }
-    }
+    },
+    "currentLocation": "first"
 }

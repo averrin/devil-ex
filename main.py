@@ -57,7 +57,7 @@ class BasicLocation(object):
         print(self.world.locations, self.state)
 
     def loadPage(self, path, args={}):
-        path = self.name + os.sep + path
+        path = self.name + '/' + path
         args['world'] = self.world
         self.__app.loadPage(path, args)
 
@@ -75,6 +75,7 @@ class Window(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
         self.resize(800, 600)
+        self.setWindowTitle('Diaboli Ex')
 
         world = json.load(open(os.path.join(CWD, 'world.json'), 'r'))
         self.world = AttrDict(world)
@@ -139,8 +140,11 @@ class Window(QMainWindow):
 
         def link(action, text):
             return '<a href="%s">%s</a>' % (action, text)
+        def show(id, text):
+            return '<a href="#" onclick="$(\'#%s\').show()">%s</a>' % (id, text)
 
         args['link'] = link
+        args['show'] = show
         self.view.setHtml(template.render(args))
 
     def click(self, url):
