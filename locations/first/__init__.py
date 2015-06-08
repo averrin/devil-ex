@@ -3,6 +3,7 @@ def init(basic):
         name = 'first'
 
         def load(self):
+            self.world.locations.first.visits = 1
             self.loadPage('templates/first.html')
 
         @basic.route('first.bzz')
