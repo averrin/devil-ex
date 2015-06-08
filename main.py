@@ -7,6 +7,7 @@ import time
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
+from PyQt5.QtWebKit import *
 from PyQt5.QtWebKitWidgets import *
 
 import json
@@ -84,6 +85,7 @@ class Window(QMainWindow):
         self.view = QWebView()
         self.view.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
         self.view.page().linkClicked.connect(self.click)
+        self.view.page().settings().setAttribute(QWebSettings.DeveloperExtrasEnabled, True)
 
         self.editor = QTextEdit()
         self.updateEditor()
@@ -141,7 +143,7 @@ class Window(QMainWindow):
         def link(action, text):
             return '<a href="%s">%s</a>' % (action, text)
         def show(id, text):
-            return '<a href="#" onclick="$(\'#%s\').show()">%s</a>' % (id, text)
+            return '<a href="#" onclick="$(\'#%s\').show();$(this).addClass(\'visited\')">%s</a>' % (id, text)
 
         args['link'] = link
         args['show'] = show
