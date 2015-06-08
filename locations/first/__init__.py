@@ -3,8 +3,9 @@ def init(basic):
         name = 'first'
 
         def load(self):
-            self.world.locations.first.visits = 1
+            self.state.visits = 1
             self.loadPage('templates/first.html')
+            self.js('$("body").html("mya")')
 
         @basic.route('first.bzz')
         def bzz(self):

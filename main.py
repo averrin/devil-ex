@@ -54,11 +54,24 @@ class BasicLocation(object):
         self.view = app.view
         self.world = world
         self.name = self.__class__.name
+        self.state = AttrDict({})
+        if 'locations' not in self.world:
+            self.world.locations = AttrDict({})
+        self.world.locations[self.name] = self.state
 
     def loadPage(self, path, args={}):
         path = self.name + os.sep + path
         args['world'] = world
         self.app.loadPage(path, args)
+
+    def show(self, id):
+        self.js('$("#%s").show()' % id)
+
+    def hide(self, id):
+        self.js('$("#%s").hide()' % id)
+
+    def js(self, script):
+        self.view.page().mainFrame().evaluateJavaScript(script)
 
 
 class Window(QMainWindow):
