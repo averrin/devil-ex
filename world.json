@@ -1,2 +1,8 @@
 {
+    "locations": {
+        "first": {
+            "visited": true,
+            "visits": 1
+        }
+    }
 }

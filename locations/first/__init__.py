@@ -5,7 +5,7 @@ def init(basic):
         def load(self):
             self.state.visits = 1
             self.loadPage('templates/first.html')
-            self.js('$("body").html("mya")')
+            # self.js('$("body").html("mya")')
 
         @basic.route('first.bzz')
         def bzz(self):

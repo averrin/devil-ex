@@ -24,10 +24,6 @@ env = Environment(loader=FileSystemLoader([
 
 app = QApplication(sys.argv)
 
-_world = json.load(open(os.path.join(CWD, 'world.json'), 'r'))
-world = AttrDict(_world)
-print(dir(world))
-
 routing = {
     'menu.exit': exit
 }
@@ -50,19 +46,20 @@ class BasicLocation(object):
     route = route
 
     def __init__(self, app, world):
-        self.app = app
+        self.__app = app
         self.view = app.view
         self.world = world
         self.name = self.__class__.name
-        self.state = AttrDict({})
+        self.state = AttrDict({'visited': True})
         if 'locations' not in self.world:
             self.world.locations = AttrDict({})
-        self.world.locations[self.name] = self.state
+        self.world.locations += {self.name: self.state}
+        print(self.world.locations, self.state)
 
     def loadPage(self, path, args={}):
         path = self.name + os.sep + path
-        args['world'] = world
-        self.app.loadPage(path, args)
+        args['world'] = self.world
+        self.__app.loadPage(path, args)
 
     def show(self, id):
         self.js('$("#%s").show()' % id)
@@ -79,24 +76,63 @@ class Window(QMainWindow):
         QMainWindow.__init__(self)
         self.resize(800, 600)
 
+        world = json.load(open(os.path.join(CWD, 'world.json'), 'r'))
+        self.world = AttrDict(world)
+
         self.tabs = QTabWidget()
         self.view = QWebView()
         self.view.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
         self.view.page().linkClicked.connect(self.click)
 
         self.editor = QTextEdit()
-        self.editor.setText(str(_world))
+        self.updateEditor()
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.updateEditor)
+        self.timer.start(1000)
+        editPanel = QWidget()
+        editPanel.setLayout(QVBoxLayout())
+        editPanel.layout().addWidget(self.editor)
+        buttonPanel = QWidget()
+        buttonPanel.setLayout(QHBoxLayout())
+        self.applyButton = QPushButton('Apply')
+        self.applyButton.clicked.connect(self.applyWorld)
+        self.reloadButton = QPushButton('Apply && Reload')
+        self.reloadButton.clicked.connect(self.reloadWorld)
+        buttonPanel.layout().addWidget(self.applyButton)
+        buttonPanel.layout().addWidget(self.reloadButton)
+        editPanel.layout().addWidget(buttonPanel)
 
         self.tabs.addTab(self.view, 'Main')
-        self.tabs.addTab(self.editor, 'Editor')
+        self.tabs.addTab(editPanel, 'Editor')
 
         self.setCentralWidget(self.tabs)
         self.loadWorld()
 
+    def updateEditor(self):
+        text = json.dumps(self.world, indent=4)
+        if text != self.editor.toPlainText() and not self.editor.hasFocus():
+            self.editor.setText(text)
+
+    def applyWorld(self):
+        try:
+            world = json.loads(self.editor.toPlainText())
+            with open(os.path.join(CWD, 'world.json'), 'w') as f:
+                f.write(self.editor.toPlainText())
+        except:
+            return
+        self.world = AttrDict(world)
+
+    def reloadWorld(self):
+        self.applyWorld()
+        self.loadWorld()
+
     def loadWorld(self):
-        self.locations = Locations(self, world, BasicLocation)
-        if not len(world.items()):
+        self.locations = Locations(self, self.world, BasicLocation)
+        print(self.world)
+        if 'currentLocation' not in self.world:
             self.loadPage('menu.html')
+        else:
+            self.locations.load(self.world.currentLocation)
 
     def loadPage(self, path, args={}):
         template = env.get_template(path)
@@ -105,7 +141,6 @@ class Window(QMainWindow):
             return '<a href="%s">%s</a>' % (action, text)
 
         args['link'] = link
-
         self.view.setHtml(template.render(args))
 
     def click(self, url):

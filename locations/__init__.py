@@ -15,3 +15,4 @@ class Locations(dict):
         location = location.init(self.basicLocation)(self.app, self.world)
         location.load()
         self[locationName] = location
+        self.world.currentLocation = locationName
