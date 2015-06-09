@@ -55,7 +55,6 @@ class BasicLocation(object):
         if 'locations' not in self.world:
             self.world.locations = AttrDict({})
         self.world.locations += {self.name: self.state}
-        print(self.world.locations, self.state)
 
     def load(self):
         pass
@@ -76,6 +75,7 @@ class BasicLocation(object):
 
     def goTo(self, location):
         self.__app.locations.load(location)
+        self.__app.saveWorld()
 
 
 class Window(QMainWindow):
@@ -99,9 +99,9 @@ class Window(QMainWindow):
         self.timer.timeout.connect(self.updateEditor)
         self.timer.start(1000)
 
-        self.saveTimer = QTimer()
-        self.saveTimer.timeout.connect(self.saveWorld)
-        self.saveTimer.start(5000)
+        # self.saveTimer = QTimer()
+        # self.saveTimer.timeout.connect(self.saveWorld)
+        # self.saveTimer.start(5000)
 
         editPanel = QWidget()
         editPanel.setLayout(QVBoxLayout())
@@ -145,7 +145,6 @@ class Window(QMainWindow):
 
     def loadWorld(self):
         self.locations = Locations(self, self.world, BasicLocation)
-        print(self.world)
         if 'currentLocation' not in self.world:
             self.loadPage('menu.html')
         else:

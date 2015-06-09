@@ -1,13 +1,2 @@
 {
-    "locations": {
-        "01_Street": {
-            "visited": true,
-            "visits": 1
-        },
-        "first": {
-            "visited": true,
-            "visits": 1
-        }
-    },
-    "currentLocation": "01_Street"
 }
