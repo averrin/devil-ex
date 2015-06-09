@@ -1,14 +1,9 @@
 {% extends "base.html" %}
 
 {% block main %}
-<style>
-  .visited {
-    color: gray;
-    font-weight: bold;
-    font-style: italic;
-  }
-</style>
 Длинный-длинный текст о том, где ты, что делаешь и почему так. {{show('1', 'Выйти из машины')}}
+{% endblock %}
 
-<div id="1" class="hide">Ты вышел из машины</div>
+{% block hidden %}
+<div id="1">Ты вышел из машины. Топай в {{link('first.exit', 'дом')}}</div>
 {% endblock %}

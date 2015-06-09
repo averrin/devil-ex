@@ -46,16 +46,19 @@ class route(object):
 class BasicLocation(object):
     route = route
 
-    def __init__(self, app, world):
+    def __init__(self, name, app, world):
         self.__app = app
         self.view = app.view
         self.world = world
-        self.name = self.__class__.name
+        self.name = name
         self.state = AttrDict({'visited': True})
         if 'locations' not in self.world:
             self.world.locations = AttrDict({})
         self.world.locations += {self.name: self.state}
         print(self.world.locations, self.state)
+
+    def load(self):
+        pass
 
     def loadPage(self, path, args={}):
         path = self.name + '/' + path
@@ -70,6 +73,9 @@ class BasicLocation(object):
 
     def js(self, script):
         self.view.page().mainFrame().evaluateJavaScript(script)
+
+    def goTo(self, location):
+        self.__app.locations.load(location)
 
 
 class Window(QMainWindow):
@@ -92,6 +98,11 @@ class Window(QMainWindow):
         self.timer = QTimer()
         self.timer.timeout.connect(self.updateEditor)
         self.timer.start(1000)
+
+        self.saveTimer = QTimer()
+        self.saveTimer.timeout.connect(self.saveWorld)
+        self.saveTimer.start(5000)
+
         editPanel = QWidget()
         editPanel.setLayout(QVBoxLayout())
         editPanel.layout().addWidget(self.editor)
@@ -115,6 +126,9 @@ class Window(QMainWindow):
         text = json.dumps(self.world, indent=4)
         if text != self.editor.toPlainText() and not self.editor.hasFocus():
             self.editor.setText(text)
+
+    def saveWorld(self):
+        json.dump(self.world, open(os.path.join(CWD, 'world.json'), 'w'), indent=4)
 
     def applyWorld(self):
         try:
@@ -141,9 +155,10 @@ class Window(QMainWindow):
         template = env.get_template(path)
 
         def link(action, text):
-            return '<a href="%s">%s</a>' % (action, text)
+            return '<a href="%s" onclick="$(this).addClass(\'visited\')">%s</a>' % (action, text)
+
         def show(id, text):
-            return '<a href="#" onclick="$(\'#%s\').show();$(this).addClass(\'visited\')">%s</a>' % (id, text)
+            return '<a href="#" onclick="$(\'#hidden #%s\').appendTo(\'#visible\');$(this).addClass(\'visited\')">%s</a>' % (id, text)
 
         args['link'] = link
         args['show'] = show
