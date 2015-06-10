@@ -15,7 +15,7 @@ from attrdict import AttrDict
 
 from locations import Locations
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, meta
 CWD = os.path.abspath(os.path.split(sys.argv[0])[0])
 env = Environment(loader=FileSystemLoader([
     os.path.join(CWD, 'templates'),
@@ -61,8 +61,7 @@ class BasicLocation(object):
 
     def loadPage(self, path, args={}):
         path = self.name + '/' + path
-        args['world'] = self.world
-        self.__app.loadPage(path, args)
+        self.__app.loadPage(path)
 
     def show(self, id):
         self.js('$("#%s").show()' % id)
@@ -120,6 +119,20 @@ class Window(QMainWindow):
         self.tabs.addTab(editPanel, 'Editor')
 
         self.setCentralWidget(self.tabs)
+
+        def link(action, *args):
+            text = args[-1]
+            args = '/'.join(args[:-1])
+            return '<a href="%s/%s" onclick="$(this).addClass(\'visited\')">%s</a>' % (action, args, text)
+
+        def show(id, text):
+            return '<a href="main.show/%s" onclick="$(this).addClass(\'visited\')">%s</a>' % (id, text)
+
+        self.context = {
+            'world': self.world,
+            'link': link,
+            'show': show
+        }
         self.loadWorld()
 
     def updateEditor(self):
@@ -150,32 +163,35 @@ class Window(QMainWindow):
         else:
             self.locations.load(self.world.currentLocation)
 
-    def loadPage(self, path, args={}):
-        template = env.get_template(path)
-
-        def link(action, text):
-            return '<a href="%s" onclick="$(this).addClass(\'visited\')">%s</a>' % (action, text)
-
-        def show(id, text):
-            return '<a href="#" onclick="$(\'#hidden #%s\').appendTo(\'#visible\');$(this).addClass(\'visited\')">%s</a>' % (id, text)
-
-        args['link'] = link
-        args['show'] = show
-        self.view.setHtml(template.render(args))
+    def loadPage(self, path):
+        self.template = env.get_template(path)
+        self.view.setHtml(self.template.render(self.context))
 
     def click(self, url):
-        cmd = url.toString()
+        url = url.toString().split('/')
+        cmd = url[0]
+        args = url[1:]
         if cmd in routing:
             objName = cmd.split('.')[0]
             if objName in ('main', 'menu'):
                 obj = self
             else:
                 obj = self.locations[objName]
-            routing[cmd](obj)
+            if args[0]:
+                routing[cmd](obj, *args)
+            else:
+                routing[cmd](obj)
 
     @route('menu.play')
     def play(self):
         self.locations.load('first')
+
+    @route('main.show')
+    def showBlock(self, block):
+        html = ''.join(self.template.blocks[block](self.template.new_context(self.context)))
+        script = '$("#visible").append("%s")' % html.strip().replace('"', '\\"').replace("'", "\\'").replace('\n', '')
+        print(script)
+        self.view.page().mainFrame().evaluateJavaScript(script)
 
 win = Window()
 win.show()
