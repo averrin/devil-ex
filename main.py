@@ -101,10 +101,6 @@ class Window(QMainWindow):
         self.view = QWebView(self)
         self.view.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
         self.view.page().linkClicked.connect(self.click)
-        self.view.page().settings().setAttribute(
-            QWebSettings.DeveloperExtrasEnabled,
-            True
-        )
 
         self.editor = QTextEdit()
 
@@ -133,6 +129,11 @@ class Window(QMainWindow):
 
             self.tabs.addTab(self.view, 'Game')
             self.tabs.addTab(editPanel, 'Editor')
+
+            self.view.page().settings().setAttribute(
+                QWebSettings.DeveloperExtrasEnabled,
+                True
+            )
             self.setCentralWidget(self.tabs)
         else:
             self.setCentralWidget(self.view)
