@@ -26,7 +26,7 @@ env = Environment(loader=FileSystemLoader([
 app = QApplication(sys.argv)
 
 routing = {
-    'menu.exit': exit
+    'menu.exit': sys.exit
 }
 
 DEBUG = (os.environ['DEBUG'].lower() in ('true', 'yes', '1')) if 'DEBUG' in os.environ else False
@@ -178,6 +178,7 @@ class Window(QMainWindow):
         self.loadWorld()
 
     def loadWorld(self):
+        self.displayedBlocks = []
         self.locations = Locations(self, self.world, BasicLocation)
         if 'currentLocation' not in self.world:
             self.loadPage('menu.html')
