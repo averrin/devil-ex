@@ -140,10 +140,10 @@ class Window(QMainWindow):
         def link(action, *args):
             text = args[-1]
             args = '/'.join(args[:-1])
-            return '<a href="%s/%s" onclick="$(this).addClass(\'visited\')">%s</a>' % (action, args, text)
+            return '<a href="%s/%s">%s</a>' % (action, args, text)
 
         def show(id, text):
-            return '<a href="main.show/%s" onclick="$(this).addClass(\'visited\')">%s</a>' % (id, text)
+            return '<a href="main.show/%s">%s</a>' % (id, text)
 
         self.context = {
             'world': self.world,
@@ -184,6 +184,7 @@ class Window(QMainWindow):
             self.goTo(self.world.currentLocation)
 
     def goTo(self, location):
+        self.displayedBlocks = []
         self.currentLocation = self.locations.load(location)
 
     def loadPage(self, path):
@@ -212,6 +213,8 @@ class Window(QMainWindow):
                 routing[cmd](obj, *args)
             else:
                 routing[cmd](obj)
+            script = '$("a[href=\'%s\']").addClass("visited")' % url
+            self.view.page().mainFrame().evaluateJavaScript(script)
 
     @route('menu.play')
     def play(self):
@@ -219,12 +222,18 @@ class Window(QMainWindow):
 
     @route('main.show')
     def showBlock(self, block):
+        if block in self.displayedBlocks:
+            return
+        else:
+            self.displayedBlocks.append(block)
         html = ''.join(
             self.template.blocks[block](
                 self.template.new_context(self.context)
             )
         ).replace('"', '\\"').replace("'", "\\'").replace('\n', '')
         script = '$("#visible").append("%s")' % html.strip()
+        self.view.page().mainFrame().evaluateJavaScript(script)
+        script = '$("a[href=\'%s\']").addClass("visited")' % ('main.show/' + block)
         self.view.page().mainFrame().evaluateJavaScript(script)
 
 win = Window()
