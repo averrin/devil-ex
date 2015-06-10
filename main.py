@@ -29,6 +29,8 @@ routing = {
     'menu.exit': exit
 }
 
+DEBUG = (os.environ['DEBUG'].lower() in ('true', 'yes', '1')) if 'DEBUG' in os.environ else False
+
 
 class route(object):
     def __init__(self, path):
@@ -96,7 +98,7 @@ class Window(QMainWindow):
         self.world = AttrDict(world)
 
         self.tabs = QTabWidget()
-        self.view = QWebView()
+        self.view = QWebView(self)
         self.view.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
         self.view.page().linkClicked.connect(self.click)
         self.view.page().settings().setAttribute(
@@ -105,10 +107,6 @@ class Window(QMainWindow):
         )
 
         self.editor = QTextEdit()
-        self.updateEditor()
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.updateEditor)
-        self.timer.start(1000)
 
         # self.saveTimer = QTimer()
         # self.saveTimer.timeout.connect(self.saveWorld)
@@ -127,10 +125,17 @@ class Window(QMainWindow):
         buttonPanel.layout().addWidget(self.reloadButton)
         editPanel.layout().addWidget(buttonPanel)
 
-        self.tabs.addTab(self.view, 'Main')
-        self.tabs.addTab(editPanel, 'Editor')
+        if DEBUG:
+            self.updateEditor()
+            self.timer = QTimer()
+            self.timer.timeout.connect(self.updateEditor)
+            self.timer.start(1000)
 
-        self.setCentralWidget(self.tabs)
+            self.tabs.addTab(self.view, 'Game')
+            self.tabs.addTab(editPanel, 'Editor')
+            self.setCentralWidget(self.tabs)
+        else:
+            self.setCentralWidget(self.view)
 
         def link(action, *args):
             text = args[-1]
