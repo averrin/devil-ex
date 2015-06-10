@@ -91,7 +91,7 @@ class Window(QMainWindow):
         worldPath = os.path.join(CWD, 'world.json')
         if not os.path.isfile(worldPath):
             with open(worldPath, 'w') as wf:
-                wf.write('{}')
+                json.dump({"player": {}}, wf)
         world = json.load(open(worldPath, 'r'))
         self.world = AttrDict(world)
 
@@ -99,7 +99,10 @@ class Window(QMainWindow):
         self.view = QWebView()
         self.view.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
         self.view.page().linkClicked.connect(self.click)
-        self.view.page().settings().setAttribute(QWebSettings.DeveloperExtrasEnabled, True)
+        self.view.page().settings().setAttribute(
+            QWebSettings.DeveloperExtrasEnabled,
+            True
+        )
 
         self.editor = QTextEdit()
         self.updateEditor()
@@ -150,7 +153,10 @@ class Window(QMainWindow):
             self.editor.setText(text)
 
     def saveWorld(self):
-        json.dump(self.world, open(os.path.join(CWD, 'world.json'), 'w'), indent=4)
+        json.dump(
+            self.world, open(os.path.join(CWD, 'world.json'), 'w'),
+            indent=4
+        )
 
     def applyWorld(self):
         try:
@@ -178,9 +184,12 @@ class Window(QMainWindow):
     def loadPage(self, path):
         if 'currentLocation' in self.world:
             if self.world.currentLocation in self.world.locations:
-                self.context['location'] = self.world.locations[self.world.currentLocation]
+                self.context['location'] = self.world.locations[
+                    self.world.currentLocation
+                ]
             else:
                 self.context['location'] = {}
+        self.context['player'] = self.world.player
         self.template = env.get_template(path)
         self.view.setHtml(self.template.render(self.context))
 
@@ -205,8 +214,12 @@ class Window(QMainWindow):
 
     @route('main.show')
     def showBlock(self, block):
-        html = ''.join(self.template.blocks[block](self.template.new_context(self.context)))
-        script = '$("#visible").append("%s")' % html.strip().replace('"', '\\"').replace("'", "\\'").replace('\n', '')
+        html = ''.join(
+            self.template.blocks[block](
+                self.template.new_context(self.context)
+            )
+        ).replace('"', '\\"').replace("'", "\\'").replace('\n', '')
+        script = '$("#visible").append("%s")' % html.strip()
         self.view.page().mainFrame().evaluateJavaScript(script)
 
 win = Window()
