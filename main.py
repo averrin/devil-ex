@@ -51,10 +51,13 @@ class BasicLocation(object):
         self.view = app.view
         self.world = world
         self.name = name
-        self.state = AttrDict({'visited': True})
         if 'locations' not in self.world:
             self.world.locations = AttrDict({})
-        self.world.locations += {self.name: self.state}
+        if self.name not in self.world.locations:
+            self.world.locations += {self.name: {'visited': True}}
+
+    def set(self, key, value):
+        self.world.locations[self.name][key] = value
 
     def load(self):
         pass
@@ -63,18 +66,20 @@ class BasicLocation(object):
         path = self.name + '/' + path
         self.__app.loadPage(path)
 
-    def show(self, id):
-        self.js('$("#%s").show()' % id)
-
-    def hide(self, id):
-        self.js('$("#%s").hide()' % id)
-
     def js(self, script):
         self.view.page().mainFrame().evaluateJavaScript(script)
 
     def goTo(self, location):
-        self.__app.locations.load(location)
+        self.__app.goTo(location)
         self.__app.saveWorld()
+
+    def __getattr__(self, key):
+        if key in self.__dict__:
+            return self.__getattribute__(key)
+        else:
+            if key not in self.world.locations[self.name]:
+                self.world.locations[self.name][key] = None
+            return self.world.locations[self.name][key]
 
 
 class Window(QMainWindow):
@@ -83,7 +88,11 @@ class Window(QMainWindow):
         self.resize(800, 600)
         self.setWindowTitle('Diaboli Ex')
 
-        world = json.load(open(os.path.join(CWD, 'world.json'), 'r'))
+        worldPath = os.path.join(CWD, 'world.json')
+        if not os.path.isfile(worldPath):
+            with open(worldPath, 'w') as wf:
+                wf.write('{}')
+        world = json.load(open(worldPath, 'r'))
         self.world = AttrDict(world)
 
         self.tabs = QTabWidget()
@@ -161,9 +170,17 @@ class Window(QMainWindow):
         if 'currentLocation' not in self.world:
             self.loadPage('menu.html')
         else:
-            self.locations.load(self.world.currentLocation)
+            self.goTo(self.world.currentLocation)
+
+    def goTo(self, location):
+        self.currentLocation = self.locations.load(location)
 
     def loadPage(self, path):
+        if 'currentLocation' in self.world:
+            if self.world.currentLocation in self.world.locations:
+                self.context['location'] = self.world.locations[self.world.currentLocation]
+            else:
+                self.context['location'] = {}
         self.template = env.get_template(path)
         self.view.setHtml(self.template.render(self.context))
 
@@ -190,7 +207,6 @@ class Window(QMainWindow):
     def showBlock(self, block):
         html = ''.join(self.template.blocks[block](self.template.new_context(self.context)))
         script = '$("#visible").append("%s")' % html.strip().replace('"', '\\"').replace("'", "\\'").replace('\n', '')
-        print(script)
         self.view.page().mainFrame().evaluateJavaScript(script)
 
 win = Window()
