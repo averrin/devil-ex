@@ -3,19 +3,21 @@
 
 import sys
 import os
-import time
 from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtWebKit import *
-from PyQt5.QtWebKitWidgets import *
+from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import (
+    QMainWindow, QApplication, QTabWidget, QTextEdit, QWidget, QVBoxLayout,
+    QHBoxLayout, QPushButton
+)
+from PyQt5.QtWebKit import QWebSettings
+from PyQt5.QtWebKitWidgets import QWebView, QWebPage
 
 import json
 from attrdict import AttrDict
 
 from locations import Locations
 
-from jinja2 import Environment, FileSystemLoader, meta
+from jinja2 import Environment, FileSystemLoader
 CWD = os.path.abspath(os.path.split(sys.argv[0])[0])
 env = Environment(loader=FileSystemLoader([
     os.path.join(CWD, 'templates'),
@@ -67,7 +69,9 @@ class BasicLocation(object):
     def load(self):
         pass
 
-    def loadPage(self, path, args={}):
+    def loadPage(self, path, args=None):
+        if args is None:
+            args = {}
         path = self.name + '/' + path
         self.__app.loadPage(path)
 
@@ -147,8 +151,8 @@ class Window(QMainWindow):
             args = '/'.join(args[:-1])
             return '<a href="%s/%s">%s</a>' % (action, args, text)
 
-        def show(id, text):
-            return '<a href="main.show/%s">%s</a>' % (id, text)
+        def show(block, text):
+            return '<a href="main.show/%s">%s</a>' % (block, text)
 
         def disable(*names):
             script = ''
@@ -185,7 +189,8 @@ class Window(QMainWindow):
             world = json.loads(self.editor.toPlainText())
             with open(self.worldPath, 'w') as f:
                 f.write(self.editor.toPlainText())
-        except:
+        except Exception as e:
+            print(e)
             return
         self.world = AttrDict(world)
 
