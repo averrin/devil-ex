@@ -29,7 +29,10 @@ routing = {
     'menu.exit': sys.exit
 }
 
-DEBUG = (os.environ['DEBUG'].lower() in ('true', 'yes', '1')) if 'DEBUG' in os.environ else False
+if 'DEBUG' in os.environ:
+    DEBUG = os.environ['DEBUG'].lower() in ('true', 'yes', '1')
+else:
+    DEBUG = False
 
 
 class route(object):
@@ -153,7 +156,8 @@ class Window(QMainWindow):
                 if '.' not in name:
                     self.displayedBlocks.append(name)
                     name = 'main.show/%s' % name
-                script += '$("a[href=\'%s\']").addClass("disabled").attr("href", "#");' % name
+                script += '$("a[href=\'%s\']")' % name
+                script += '.addClass("disabled").attr("href", "#");'
             script = '<script>%s</script>' % script
             return script
 
@@ -247,7 +251,7 @@ class Window(QMainWindow):
         ).replace('"', '\\"').replace("'", "\\'").replace('\n', '')
         script = '$("#visible").append("%s")' % html.strip()
         self.view.page().mainFrame().evaluateJavaScript(script)
-        script = '$("a[href=\'%s\']").addClass("visited")' % ('main.show/' + block)
+        script = '$("a[href=\'main.show/%s\']").addClass("visited")' % block
         self.view.page().mainFrame().evaluateJavaScript(script)
 
 win = Window()

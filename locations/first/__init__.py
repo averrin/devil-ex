@@ -7,7 +7,4 @@ def init(basic):
         def exit(self):
             self.goTo('01_Street')
 
-
-
-
     return Location

@@ -12,7 +12,9 @@ class Locations(dict):
 
     def load(self, locationName):
         location = importlib.import_module('.' + locationName, 'locations')
-        location = location.init(self.basicLocation)(locationName, self.app, self.world)
+        location = location.init(self.basicLocation)(
+            locationName, self.app, self.world
+        )
         self.world.currentLocation = locationName
         location.load()
         self[locationName] = location

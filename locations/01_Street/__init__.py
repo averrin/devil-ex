@@ -7,6 +7,4 @@ def init(basic):
                 self.set('visits', self.visits + 1)
             self.loadPage('templates/main.html')
 
-
-
     return Location
