@@ -90,11 +90,12 @@ class Window(QMainWindow):
         self.resize(800, 600)
         self.setWindowTitle('Diaboli Ex')
 
-        worldPath = os.path.join(CWD, 'world.json')
-        if not os.path.isfile(worldPath):
-            with open(worldPath, 'w') as wf:
+        home = os.path.expanduser('~')
+        self.worldPath = os.path.join(home, '.diaboli-ex.json')
+        if not os.path.isfile(self.worldPath):
+            with open(self.worldPath, 'w') as wf:
                 json.dump({"player": {}}, wf)
-        world = json.load(open(worldPath, 'r'))
+        world = json.load(open(self.worldPath, 'r'))
         self.world = AttrDict(world)
 
         self.tabs = QTabWidget()
@@ -146,10 +147,21 @@ class Window(QMainWindow):
         def show(id, text):
             return '<a href="main.show/%s">%s</a>' % (id, text)
 
+        def disable(*names):
+            script = ''
+            for name in names:
+                if '.' not in name:
+                    self.displayedBlocks.append(name)
+                    name = 'main.show/%s' % name
+                script += '$("a[href=\'%s\']").addClass("disabled").attr("href", "#");' % name
+            script = '<script>%s</script>' % script
+            return script
+
         self.context = {
             'world': self.world,
             'link': link,
-            'show': show
+            'show': show,
+            'disable': disable
         }
         self.loadWorld()
 
@@ -160,14 +172,14 @@ class Window(QMainWindow):
 
     def saveWorld(self):
         json.dump(
-            self.world, open(os.path.join(CWD, 'world.json'), 'w'),
+            self.world, open(self.worldPath, 'w'),
             indent=4
         )
 
     def applyWorld(self):
         try:
             world = json.loads(self.editor.toPlainText())
-            with open(os.path.join(CWD, 'world.json'), 'w') as f:
+            with open(self.worldPath, 'w') as f:
                 f.write(self.editor.toPlainText())
         except:
             return
