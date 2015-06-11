@@ -13,13 +13,19 @@
 {% endblock %}
 
 {% block forever %}
-<p>
-    Увы, надо {{show('outside', 'идти')}}.
-</p>
+    {{ set('player', 'lazy_ass', True) }}
+    <p>
+        Увы, надо {{show('outside', 'идти')}}.
+    </p>
 {% endblock %}
+
 {% block outside %}
-{{ disable('forever') }}
-<p>
-    бла-бла
-</p>
+    {{ disable('forever') }}
+    <p>
+        {% if player.lazy_ass %}
+            Ну ты и лентяй...
+        {% else %}
+            Молодец
+        {% endif %}
+    </p>
 {% endblock %}

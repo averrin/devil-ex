@@ -165,11 +165,19 @@ class Window(QMainWindow):
             script = '<script>%s</script>' % script
             return script
 
+        def set(section, key, value):
+            if section == 'player':
+                self.world[section][key] = value
+            elif section == 'location':
+                self.world.locations[self.world.currentLocation][key] = value
+            return '<!--//-->'
+
         self.context = {
             'world': self.world,
             'link': link,
             'show': show,
-            'disable': disable
+            'disable': disable,
+            'set': set
         }
         self.loadWorld()
 
@@ -245,6 +253,7 @@ class Window(QMainWindow):
 
     @route('main.show')
     def showBlock(self, block):
+        self.context['player'] = self.world.player
         if block in self.displayedBlocks:
             return
         else:
