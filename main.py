@@ -4,7 +4,7 @@
 import sys
 import os
 from PyQt5.QtGui import *
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, QObject, pyqtSlot
 from PyQt5.QtWidgets import (
     QMainWindow, QApplication, QTabWidget, QTextEdit, QWidget, QVBoxLayout,
     QHBoxLayout, QPushButton
@@ -20,16 +20,12 @@ from locations import Locations
 from jinja2 import Environment, FileSystemLoader
 CWD = os.path.abspath(os.path.split(sys.argv[0])[0])
 env = Environment(loader=FileSystemLoader([
-    os.path.join(CWD, 'templates'),
+    os.path.join(CWD, 'data'),
     os.path.join(CWD, 'locations')
 ]))
 
 
 app = QApplication(sys.argv)
-
-routing = {
-    'menu.exit': sys.exit
-}
 
 if 'DEBUG' in os.environ:
     DEBUG = os.environ['DEBUG'].lower() in ('true', 'yes', '1')
@@ -37,29 +33,15 @@ else:
     DEBUG = False
 
 
-class route(object):
-    def __init__(self, path):
-        self.path = path
-
-    def __call__(self, f):
-        if self.path not in routing:
-            routing[self.path] = f
-
-        def wrapped_f(*args):
-            f(*args)
-        return wrapped_f
-
-
-class BasicLocation(object):
-    route = route
+class BasicLocation(QObject, object):
+    method = pyqtSlot
 
     def __init__(self, name, app, world):
         self.__app = app
         self.view = app.view
         self.world = world
         self.name = name
-        if 'locations' not in self.world:
-            self.world.locations = AttrDict({})
+        QObject.__init__(self, objectName=name)
         if self.name not in self.world.locations:
             self.world.locations += {self.name: {'visited': True}}
 
@@ -90,6 +72,13 @@ class BasicLocation(object):
                 self.world.locations[self.name][key] = None
             return self.world.locations[self.name][key]
 
+    @pyqtSlot(str)
+    def achieve(self, aid):
+        achievement = self.__app.achievements[aid]
+        if aid not in self.world['achievements']:
+            self.world['achievements'].append(aid)
+            self.js('new PNotify({title: "%s", text: "%s", delay: 800})' % (achievement['name'], achievement['description']))
+
 
 class Window(QMainWindow):
     def __init__(self):
@@ -101,14 +90,16 @@ class Window(QMainWindow):
         self.worldPath = os.path.join(home, '.diaboli-ex.json')
         if not os.path.isfile(self.worldPath):
             with open(self.worldPath, 'w') as wf:
-                json.dump({"player": {}}, wf)
+                json.dump({"player": {}, 'locations': {}, 'achievements': []}, wf)
         world = json.load(open(self.worldPath, 'r'))
         self.world = AttrDict(world)
+        self.achievements = json.load(open(os.path.join(CWD, 'data', 'achievements.json'), 'r'))
 
         self.tabs = QTabWidget()
         self.view = QWebView(self)
-        self.view.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
-        self.view.page().linkClicked.connect(self.click)
+        # self.view.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
+        # self.view.page().linkClicked.connect(self.click)
+        self.view.page().mainFrame().javaScriptWindowObjectCleared.connect(self.injectObjects)
 
         self.editor = QTextEdit()
 
@@ -147,19 +138,40 @@ class Window(QMainWindow):
             self.setCentralWidget(self.view)
 
         def link(action, *args):
-            text = args[-1]
-            args = '/'.join(args[:-1])
-            return '<a href="%s/%s">%s</a>' % (action, args, text)
+            if args:
+                text = args[-1]
+            else:
+                text = ''
+            if action.split('.')[0] == 'main':
+                script = 'app'
+                action = action.split('.')[1]
+            else:
+                script = 'currentLocation'
+            script += '.%s(%s)' % (action, ','.join(["'%s'" % a for a in args[:-1]]))
+            if args:
+                args = '/' + '/'.join(args[:-1])
+            else:
+                args = ''
+            return '<a href=\'%s%s\' onclick="%s;return false;">%s</a>' % (action, args, script, text)
+
+        def action(action, *args):
+            a = link(action, *args)
+            script = 'currentLocation.%s(%s);' % (action, ",".join(["'%s'" % a for a in args]))
+            script = '<script>$(document).ready(function(){%s});</script>' % script
+            return script
+
+        def achieve(aid):
+            return action('achieve', aid)
 
         def show(block, text):
-            return '<a href="main.show/%s">%s</a>' % (block, text)
+            return link('main.showBlock', block, text)
 
         def disable(*names):
             script = ''
             for name in names:
                 if '.' not in name:
                     self.displayedBlocks.append(name)
-                    name = 'main.show/%s' % name
+                    name = 'showBlock/%s' % name
                 script += '$("a[href=\'%s\']")' % name
                 script += '.addClass("disabled").attr("href", "#");'
             script = '<script>%s</script>' % script
@@ -177,7 +189,9 @@ class Window(QMainWindow):
             'link': link,
             'show': show,
             'disable': disable,
-            'set': set
+            'set': set,
+            'action': action,
+            'achieve': achieve
         }
         self.loadWorld()
 
@@ -207,7 +221,6 @@ class Window(QMainWindow):
         self.loadWorld()
 
     def loadWorld(self):
-        self.displayedBlocks = []
         self.locations = Locations(self, self.world, BasicLocation)
         if 'currentLocation' not in self.world:
             self.loadPage('menu.html')
@@ -215,10 +228,10 @@ class Window(QMainWindow):
             self.goTo(self.world.currentLocation)
 
     def goTo(self, location):
-        self.displayedBlocks = []
-        self.currentLocation = self.locations.load(location)
+        self.locations.load(location)
 
     def loadPage(self, path):
+        self.displayedBlocks = []
         if 'currentLocation' in self.world:
             if self.world.currentLocation in self.world.locations:
                 self.context['location'] = self.world.locations[
@@ -230,10 +243,15 @@ class Window(QMainWindow):
         self.template = env.get_template(path)
         self.view.setHtml(self.template.render(self.context))
 
+    def injectObjects(self):
+        self.view.page().mainFrame().addToJavaScriptWindowObject('app', self)
+        if hasattr(self, 'currentLocation'):
+            self.view.page().mainFrame().addToJavaScriptWindowObject('currentLocation', self.currentLocation)
+
     def click(self, url):
-        url = url.toString().split('/')
-        cmd = url[0]
-        args = url[1:]
+        a = url.toString().split('/')
+        cmd = a[0]
+        args = a[1:]
         if cmd in routing:
             objName = cmd.split('.')[0]
             if objName in ('main', 'menu'):
@@ -244,14 +262,18 @@ class Window(QMainWindow):
                 routing[cmd](obj, *args)
             else:
                 routing[cmd](obj)
-            script = '$("a[href=\'%s\']").addClass("visited")' % url
+            script = '$("a[href=\'%s\']").addClass("visited")' % url.toString()
             self.view.page().mainFrame().evaluateJavaScript(script)
 
-    @route('menu.play')
+    @pyqtSlot()
     def play(self):
         self.locations.load('first')
 
-    @route('main.show')
+    @pyqtSlot()
+    def exit(self):
+        sys.exit()
+
+    @pyqtSlot(str)
     def showBlock(self, block):
         self.context['player'] = self.world.player
         if block in self.displayedBlocks:
@@ -268,8 +290,8 @@ class Window(QMainWindow):
         script = '$("a[href=\'main.show/%s\']").addClass("visited")' % block
         self.view.page().mainFrame().evaluateJavaScript(script)
 
-win = Window()
-win.show()
 
 if __name__ == "__main__":
+    win = Window()
+    win.show()
     app.exec_()

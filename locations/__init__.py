@@ -14,6 +14,7 @@ class Locations(dict):
             locationName, self.app, self.world
         )
         self.world.currentLocation = locationName
+        self.app.currentLocation = location
         location.load()
         self[locationName] = location
         return location

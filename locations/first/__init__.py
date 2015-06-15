@@ -3,8 +3,8 @@ def init(basic):
         def load(self):
             self.loadPage('templates/first.html')
 
-        @basic.route('first.exit')
-        def exit(self):
+        @basic.method()
+        def start(self):
             self.goTo('01_Street')
 
     return Location
