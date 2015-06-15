@@ -31,6 +31,7 @@ if 'DEBUG' in os.environ:
     DEBUG = os.environ['DEBUG'].lower() in ('true', 'yes', '1')
 else:
     DEBUG = False
+DEBUG = True
 
 
 class BasicLocation(QObject, object):
@@ -77,7 +78,8 @@ class BasicLocation(QObject, object):
         achievement = self.__app.achievements[aid]
         if aid not in self.world['achievements']:
             self.world['achievements'].append(aid)
-            self.js('new PNotify({title: "%s", text: "%s", delay: 800})' % (achievement['name'], achievement['description']))
+            script = u'new PNotify({title: "%s", text: "%s", delay: 800})' % (achievement['name'], achievement['description'])
+            self.js(script)
 
 
 class Window(QMainWindow):
@@ -90,10 +92,18 @@ class Window(QMainWindow):
         self.worldPath = os.path.join(home, '.diaboli-ex.json')
         if not os.path.isfile(self.worldPath):
             with open(self.worldPath, 'w') as wf:
-                json.dump({"player": {}, 'locations': {}, 'achievements': []}, wf)
+                json.dump({
+                    "player": {},
+                    'locations': {},
+                    'achievements': [],
+                    'persons': {},
+                    'launches': 0
+                }, wf)
         world = json.load(open(self.worldPath, 'r'))
+        world['launches'] += 1
         self.world = AttrDict(world)
-        self.achievements = json.load(open(os.path.join(CWD, 'data', 'achievements.json'), 'r'))
+        self.saveWorld()
+        self.achievements = json.load(open(os.path.join(CWD, 'data', 'achievements.json'), 'r', encoding='utf8'))
 
         self.tabs = QTabWidget()
         self.view = QWebView(self)
@@ -274,6 +284,8 @@ class Window(QMainWindow):
 
     @pyqtSlot()
     def finish(self):
+        if self.world.launches == 1:
+            self.world['achievements'].append('one_launch')
         context = {
             "done": [],
             "last": []
