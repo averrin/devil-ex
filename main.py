@@ -230,7 +230,7 @@ class Window(QMainWindow):
     def goTo(self, location):
         self.locations.load(location)
 
-    def loadPage(self, path):
+    def loadPage(self, path, context=None):
         self.displayedBlocks = []
         if 'currentLocation' in self.world:
             if self.world.currentLocation in self.world.locations:
@@ -241,7 +241,10 @@ class Window(QMainWindow):
                 self.context['location'] = {}
         self.context['player'] = self.world.player
         self.template = env.get_template(path)
-        self.view.setHtml(self.template.render(self.context))
+        if context is None:
+            context = {}
+        context.update(self.context)
+        self.view.setHtml(self.template.render(context))
 
     def injectObjects(self):
         self.view.page().mainFrame().addToJavaScriptWindowObject('app', self)
@@ -268,6 +271,19 @@ class Window(QMainWindow):
     @pyqtSlot()
     def play(self):
         self.locations.load('first')
+
+    @pyqtSlot()
+    def finish(self):
+        context = {
+            "done": [],
+            "last": []
+        }
+        for aid, a in self.achievements.items():
+            if aid in self.world.achievements:
+                context['done'].append(a)
+            else:
+                context['last'].append(a)
+        self.loadPage('finish.html', context=context)
 
     @pyqtSlot()
     def exit(self):

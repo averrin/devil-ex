@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block main %}
+<h3>Полученные достижения:</h3>
+<ul>
+    {% for a in done %}
+    <li><strong style="color: green">{{a.name}}</strong>: {{a.description}}</li>
+    {% endfor %}
+</ul>
+<h3>Осталось получить:</h3>
+<ul>
+    {% for a in last %}
+    <li><strong style="color: darkgray">{{a.name}}</strong>: {{a.description}}</li>
+    {% endfor %}
+</ul>
+{% endblock %}
