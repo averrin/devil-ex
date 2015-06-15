@@ -109,6 +109,7 @@ class Window(QMainWindow):
         self.view = QWebView(self)
         # self.view.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
         # self.view.page().linkClicked.connect(self.click)
+
         self.view.page().mainFrame().javaScriptWindowObjectCleared.connect(self.injectObjects)
 
         self.editor = QTextEdit()
@@ -162,7 +163,9 @@ class Window(QMainWindow):
                 args = '/' + '/'.join(args[:-1])
             else:
                 args = ''
-            return '<a href=\'%s%s\' onclick="%s;return false;">%s</a>' % (action, args, script, text)
+            script = ('$("a[href=\'%s%s\']").on("click", function(e)' % (action, args)) + \
+                '{e.preventDefault();%s;$("a[href=\'" + e.target + "\']").addClass("visited");return false;})' % (script)
+            return '<a href=\'%s%s\'>%s</a><script>$(document).ready(function(){%s});</script>' % (action, args, text, script)
 
         def action(action, *args):
             a = link(action, *args)
@@ -254,29 +257,14 @@ class Window(QMainWindow):
         if context is None:
             context = {}
         context.update(self.context)
+        self.injectObjects()
         self.view.setHtml(self.template.render(context))
 
     def injectObjects(self):
         self.view.page().mainFrame().addToJavaScriptWindowObject('app', self)
         if hasattr(self, 'currentLocation'):
             self.view.page().mainFrame().addToJavaScriptWindowObject('currentLocation', self.currentLocation)
-
-    def click(self, url):
-        a = url.toString().split('/')
-        cmd = a[0]
-        args = a[1:]
-        if cmd in routing:
-            objName = cmd.split('.')[0]
-            if objName in ('main', 'menu'):
-                obj = self
-            else:
-                obj = self.locations[objName]
-            if args[0]:
-                routing[cmd](obj, *args)
-            else:
-                routing[cmd](obj)
-            script = '$("a[href=\'%s\']").addClass("visited")' % url.toString()
-            self.view.page().mainFrame().evaluateJavaScript(script)
+        self.view.page().mainFrame().evaluateJavaScript('console.log(app)')
 
     @pyqtSlot()
     def play(self):

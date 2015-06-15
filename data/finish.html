@@ -6,10 +6,12 @@
     <li><strong style="color: green">{{a.name}}</strong>: {{a.description}}</li>
     {% endfor %}
 </ul>
+{% if last %}
 <h3>Осталось получить:</h3>
 <ul>
     {% for a in last %}
     <li><strong style="color: darkgray">{{a.name}}</strong>: {{a.description}}</li>
     {% endfor %}
 </ul>
+{% endif %}
 {% endblock %}
