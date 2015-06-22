@@ -5,6 +5,6 @@ def init(basic):
                 self.set('visits', 1)
             else:
                 self.set('visits', self.visits + 1)
-            self.loadPage('templates/main.html')
+            self.loadPage('templates/car.html')
 
     return Location

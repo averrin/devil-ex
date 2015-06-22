@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block main %}
+    {{ achieve('init') }}
+    <p>
+        За окном довольно комфортная температура, но жутко душно, наверное будет гроза. Потому, вероятно, так {{show('pain', 'болит голова')}}.<br>
+        Однако, дело &mdash; есть дело, и хоть из машины вылезать абсолютно не хочется, долг зовет.
+    </p>
+    <p>
+        {{show('outside', 'Выйти из машины')}}
+    </p>
+    <p>
+        {{show('forever', 'Остаться в машине навсегда')}}
+    </p>
+{% endblock %}
+{% block pain %}
+    <p>
+        Можно {{show('pills', 'поискать аспирин')}} в бардачке, но вряд ли он там есть.
+    </p>
+{% endblock %}
+{% block pills %}
+    <p>
+        А, нет, смотри-ка, есть. Правда, это может быть амфетамин. Или, забытый Сэмом нейропазин.
+    </p>
+    <p>
+      {{show('cured', 'Выпить таблетки.')}}
+    </p>
+    <p>
+      {{show('not_cured', 'Не пить таблетки, мало ли.')}}
+    </p>
+
+{% endblock %}
+
+{% block cured %}
+{{ set('player', 'cured', True) }}
+{{ disable('not_cured') }}
+  <p>
+    Ты жадно глотаешь две таблетки, запивая теплой минералкой, тоже чудом отыскавшейся под сиденьем.
+  </p>
+{% endblock %}
+{% block not_cured %}
+{{ set('player', 'cured', False) }}
+{{ disable('cured') }}
+  <p>
+    Голова продолжает болеть мучительно ноя при неловких движениях.
+  </p>
+{% endblock %}
+
+{% block forever %}
+    {{ set('player', 'lazy_ass', True) }}
+    <p>
+        Увы, надо {{show('outside', 'идти')}}.
+    </p>
+{% endblock %}
+
+{% block outside %}
+  {{ disable('pain') }}
+    {{ disable('forever') }}
+    <p>
+        {% if player.lazy_ass %}
+            Ну ты и лентяй...
+        {% else %}
+            Молодец
+        {% endif %}
+    </p>
+    {{link('main.finish', 'Конец')}}
+{% endblock %}
