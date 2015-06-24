@@ -18,6 +18,10 @@ from attrdict import AttrDict
 from locations import Locations
 
 from jinja2 import Environment, FileSystemLoader
+import semver
+
+VERSION = semver.format_version(0, 1, 0, 'alpha')
+
 CWD = os.path.abspath(os.path.split(sys.argv[0])[0])
 env = Environment(loader=FileSystemLoader([
     os.path.join(CWD, 'data'),
@@ -31,7 +35,7 @@ if 'DEBUG' in os.environ:
     DEBUG = os.environ['DEBUG'].lower() in ('true', 'yes', '1')
 else:
     DEBUG = False
-# DEBUG = True
+DEBUG = True
 
 
 class BasicLocation(QObject, object):
@@ -61,8 +65,10 @@ class BasicLocation(QObject, object):
     def js(self, script):
         self.view.page().mainFrame().evaluateJavaScript(script)
 
+    @pyqtSlot(str)
     def goTo(self, location):
         self.__app.goTo(location)
+        self.world.checkpoint = ''
         self.__app.saveWorld()
 
     def __getattr__(self, key):
@@ -73,13 +79,25 @@ class BasicLocation(QObject, object):
                 self.world.locations[self.name][key] = None
             return self.world.locations[self.name][key]
 
+    @pyqtSlot(str, str)
+    def notify(self, title, text):
+        script = u'new PNotify({title: "%s", text: "%s", delay: 800})' % (
+            title, text
+        )
+        self.js(script)
+
     @pyqtSlot(str)
     def achieve(self, aid):
         achievement = self.__app.achievements[aid]
         if aid not in self.world['achievements']:
             self.world['achievements'].append(aid)
-            script = u'new PNotify({title: "%s", text: "%s", delay: 800})' % (achievement['name'], achievement['description'])
-            self.js(script)
+            self.notify(achievement['name'], achievement['description'])
+
+    @pyqtSlot(str)
+    def checkpoint(self, label):
+        self.world['checkpoint'] = label
+        self.__app.saveWorld()
+        self.notify(u'Контрольная точка', 'Игра сохранена.')
 
 
 class Window(QMainWindow):
@@ -90,17 +108,23 @@ class Window(QMainWindow):
 
         home = os.path.expanduser('~')
         self.worldPath = os.path.join(home, '.diaboli-ex.json')
-        if not os.path.isfile(self.worldPath):
-            with open(self.worldPath, 'w') as wf:
-                json.dump({
-                    "player": {},
-                    'locations': {},
-                    'achievements': [],
-                    'persons': {},
-                    'launches': 0
-                }, wf)
-        world = json.load(open(self.worldPath, 'r'))
+
+        if os.path.isfile(self.worldPath):
+            world = json.load(open(self.worldPath, 'r'))
+            if 'version' not in world:
+                world['version'] = '0.0.0'
+            if semver.compare(VERSION, world['version']) > 0:
+                v1 = world['version'].split('.')
+                v0 = VERSION.split('.')
+                if v0[0] != v1[0] or v0[1] != v1[1]:
+                    self.initNewWorld()
+                    world = json.load(open(self.worldPath, 'r'))
+        else:
+            self.initNewWorld()
+            world = json.load(open(self.worldPath, 'r'))
+
         world['launches'] += 1
+        world['version'] = VERSION
         self.world = AttrDict(world)
         self.saveWorld()
         self.achievements = json.load(open(os.path.join(CWD, 'data', 'achievements.json'), 'r', encoding='utf8'))
@@ -164,8 +188,11 @@ class Window(QMainWindow):
             else:
                 args = ''
             script = ('$("a[href=\'%s%s\']").on("click", function(e)' % (action, args)) + \
-                '{e.preventDefault();%s;$("a[href=\'" + e.target + "\']").addClass("visited");return false;})' % (script)
-            return '<a href=\'%s%s\'>%s</a><script>$(document).ready(function(){%s});</script>' % (action, args, text, script)
+                '{e.preventDefault();%s;' % (script) + \
+                '$("a[href=\'" + e.target + "\']").addClass("visited");return false;})'
+            return '<a href=\'%s%s\'>%s</a><script>$(document).ready(function(){%s});</script>' % (
+                action, args, text, script
+            )
 
         def action(action, *args):
             a = link(action, *args)
@@ -175,6 +202,9 @@ class Window(QMainWindow):
 
         def achieve(aid):
             return action('achieve', aid)
+
+        def checkpoint(label):
+            return action('checkpoint', label)
 
         def show(block, text):
             return link('main.showBlock', block, text)
@@ -204,9 +234,22 @@ class Window(QMainWindow):
             'disable': disable,
             'set': set,
             'action': action,
-            'achieve': achieve
+            'achieve': achieve,
+            'checkpoint': checkpoint
         }
         self.loadWorld()
+
+    def initNewWorld(self):
+        with open(self.worldPath, 'w') as wf:
+            json.dump({
+                "player": {},
+                'locations': {},
+                'achievements': [],
+                'persons': {},
+                'launches': 0,
+                'checkpoint': '',
+                'version': VERSION
+            }, wf)
 
     def updateEditor(self):
         text = json.dumps(self.world, indent=4)
