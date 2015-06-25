@@ -97,7 +97,7 @@ class BasicLocation(QObject, object):
     def checkpoint(self, label):
         self.world['checkpoint'] = label
         self.__app.saveWorld()
-        self.notify(u'Контрольная точка', 'Игра сохранена.')
+        self.notify(u'Контрольная точка', u'Игра сохранена.')
 
 
 class Window(QMainWindow):

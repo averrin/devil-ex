@@ -22,7 +22,7 @@ label = QLabel()
 
 def createGraph():
     g = gv.Digraph(format='png')
-    parser = Parser(env, open(sys.argv[1], 'r').read())
+    parser = Parser(env, open(sys.argv[1], 'r', encoding='utf8').read())
     nodes = parser.subparse()
 
     blocks = {}
