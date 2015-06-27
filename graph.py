@@ -34,55 +34,102 @@ def createGraph():
     nodes = parser.subparse()
 
     blocks = {}
-    important = []
+    ghosted = {}
+
+    def processNode(n):
+        if type(n).__name__ == 'Call':
+            if n.node.name == 'show':
+                return 'links', n.args
+            elif n.node.name == 'disable':
+                return 'disables', n.args
+            elif n.node.name == 'link':
+                return 'calls', n.args
+            elif n.node.name == 'set':
+                return 'label', n.args
+            elif n.node.name == 'checkpoint':
+                return 'label', n.args
+
 
     for node in nodes:
         name = type(node).__name__
         if name == 'Block':
-            blocks[node.name] = {'links': [], 'disables': [], 'label': [], 'calls': []}
             subnodes = []
+            conditional = []
+            blocks[node.name] = {'links': [], 'disables': [], 'label': [], 'calls': [], 'conditional': []}
             for b in node.body:
                 if hasattr(b, 'nodes'):
                     subnodes.extend(b.nodes)
+                elif type(b).__name__ == 'If':
+                    print(b)
+                    # TODO: format expression to string
+                    conditional.append([b.body[0].nodes, b.test.expr.value])
+
             for n in subnodes:
-                if type(n).__name__ == 'Call':
-                    if n.node.name == 'show':
-                        blocks[node.name]['links'].append(n.args)
-                    elif n.node.name == 'disable':
-                        blocks[node.name]['disables'].append(n.args)
-                    elif n.node.name == 'link':
-                        blocks[node.name]['calls'].append(n.args)
-                        important.append(node.name)
-                    elif n.node.name == 'set':
-                        blocks[node.name]['label'].append(n.args)
+                ret = processNode(n)
+                if ret is not None:
+                    key, value = ret
+                    blocks[node.name][key].append(value)
+
+            for subnode in conditional:
+                for n in subnode[0]:
+                    ret = processNode(n)
+                    if ret is not None:
+                        key, value = ret
+                        if key == 'links':
+                            blocks[node.name]['conditional'].append([value, subnode[1]])
+                            ghosted[subnode[1]] = value[0].value
+                        else:
+                            blocks[node.name][key].append(value)
 
     for block in blocks.keys():
         color = None
-        if block in important:
+        if blocks[block]['calls']:
             color = 'orange'
             labeltext = ', '.join(['%s -> %s' % (a[1].value, a[0].value) for a in blocks[block]['calls']])
             g.node(block, fillcolor=color, style='filled', xlabel=labeltext, fontcolor='#444488')
         elif block == 'main':
-            g.node(block, fillcolor='#444488', style='filled', shape='hexagon', fontcolor='white')
+            labeltext = ''
+            if blocks[block]['label']:
+                labeltext = 'Checkpoint: ' + blocks[block]['label'][0][0].value
+            g.node(block, fillcolor='#aaaaff', style='filled', shape='hexagon', fontcolor='black', xlabel=labeltext)
         else:
             labeltext = []
             if blocks[block]['label']:
                 for s in blocks[block]['label']:
                     args = [a.value for a in s]
                     labeltext.append(args[0] + '.' + args[1] + '=' + str(args[2]))
+                    if args[1] in ghosted.keys():
+                        g.edge(block, ghosted[args[1]], color="blue", arrowhead="none", style='dashed', fontcolor="blue", label=args[1])
+
                 labeltext = ', '.join(labeltext)
             if not labeltext:
                 labeltext = ''
-            g.node(block, style='filled', xlabel=labeltext)
+            if block in ghosted.values():
+                g.node(block, style='filled', xlabel=labeltext, fillcolor="lightblue")
+            else:
+                g.node(block, style='filled', xlabel=labeltext)
     for block, edges in blocks.items():
         for l in edges['links']:
             g.edge(block, l[0].value, label=l[1].value, arrowhead='open')
         for l in edges['disables']:
             g.edge(block, l[0].value, label='', color="red", fontcolor="red", style='dashed')
+        for l in edges['conditional']:
+            g.edge(block, l[0][0].value, color="blue", fontcolor="blue", label=l[1])
 
     g.render(filename='result')
     pixmap = QPixmap('result.png')
     label.setPixmap(pixmap)
+
+def tryRender():
+    try:
+        createGraph()
+    except Exception as e:
+        g = gv.Digraph(format='png')
+        g.node('Error: %s' % e, style='filled', fillcolor='red', shape="rect")
+        g.render(filename='result')
+        pixmap = QPixmap('result.png')
+        label.setPixmap(pixmap)
+
 
 win.resize(800, 600)
 widget = QWidget()
@@ -92,7 +139,7 @@ widget.layout().addWidget(label)
 win.setCentralWidget(widget)
 createGraph()
 timer = QTimer()
-timer.timeout.connect(createGraph)
+timer.timeout.connect(tryRender)
 timer.start(1000)
 win.show()
 sys.exit(app.exec_())

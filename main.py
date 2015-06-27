@@ -20,7 +20,7 @@ from locations import Locations
 from jinja2 import Environment, FileSystemLoader
 import semver
 
-VERSION = semver.format_version(0, 1, 0, 'alpha')
+VERSION = semver.format_version(0, 2, 0, 'alpha')
 
 CWD = os.path.abspath(os.path.split(sys.argv[0])[0])
 env = Environment(loader=FileSystemLoader([
@@ -35,7 +35,7 @@ if 'DEBUG' in os.environ:
     DEBUG = os.environ['DEBUG'].lower() in ('true', 'yes', '1')
 else:
     DEBUG = False
-# DEBUG = True
+DEBUG = True
 
 
 class BasicLocation(QObject, object):
