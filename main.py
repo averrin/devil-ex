@@ -35,7 +35,7 @@ if 'DEBUG' in os.environ:
     DEBUG = os.environ['DEBUG'].lower() in ('true', 'yes', '1')
 else:
     DEBUG = False
-DEBUG = True
+# DEBUG = True
 
 
 class BasicLocation(QObject, object):

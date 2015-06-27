@@ -9,9 +9,10 @@ import graphviz as gv
 from PyQt5.QtGui import *
 from PyQt5.QtCore import QTimer, QObject, pyqtSlot
 from PyQt5.QtWidgets import (
-    QMainWindow, QApplication, QTabWidget, QTextEdit, QWidget, QVBoxLayout,
-    QHBoxLayout, QPushButton, QLabel
+    QMainWindow, QApplication, QWidget, QVBoxLayout,
+    QHBoxLayout, QComboBox, QLabel
 )
+import fnmatch
 
 CWD = os.path.abspath(os.path.split(sys.argv[0])[0])
 env = Environment()
@@ -19,10 +20,17 @@ app = QApplication(sys.argv)
 win = QMainWindow()
 label = QLabel()
 
+matches = []
+for root, dirnames, filenames in os.walk('locations'):
+  for filename in fnmatch.filter(filenames, '*.html'):
+    matches.append(os.path.join(root, filename))
+combo = QComboBox()
+combo.addItems(matches)
+
 
 def createGraph():
     g = gv.Digraph(format='png')
-    parser = Parser(env, open(sys.argv[1], 'r', encoding='utf8').read())
+    parser = Parser(env, open(combo.currentText(), 'r', encoding='utf8').read())
     nodes = parser.subparse()
 
     blocks = {}
@@ -77,7 +85,11 @@ def createGraph():
     label.setPixmap(pixmap)
 
 win.resize(800, 600)
-win.setCentralWidget(label)
+widget = QWidget()
+widget.setLayout(QVBoxLayout())
+widget.layout().addWidget(combo)
+widget.layout().addWidget(label)
+win.setCentralWidget(widget)
 createGraph()
 timer = QTimer()
 timer.timeout.connect(createGraph)
