@@ -60,9 +60,13 @@ def createGraph():
                 if hasattr(b, 'nodes'):
                     subnodes.extend(b.nodes)
                 elif type(b).__name__ == 'If':
-                    print(b)
-                    # TODO: format expression to string
-                    conditional.append([b.body[0].nodes, b.test.expr.value])
+                    test = b.test
+                    if type(test).__name__ == 'Compare':
+                        conditional.append([b.body[0].nodes, test.expr.attr, '%s %s %s' % (test.expr.attr, test.ops[0].op, test.ops[0].expr.value)])
+                    elif type(test).__name__ == 'Getattr':
+                        conditional.append([b.body[0].nodes, test.attr, '%s == True' % test.attr])
+                    elif type(test).__name__ == 'Test':
+                        conditional.append([b.body[0].nodes, test.node.attr, '%s is %s' % (test.node.attr, test.name)])
 
             for n in subnodes:
                 ret = processNode(n)
@@ -76,7 +80,7 @@ def createGraph():
                     if ret is not None:
                         key, value = ret
                         if key == 'links':
-                            blocks[node.name]['conditional'].append([value, subnode[1]])
+                            blocks[node.name]['conditional'].append([value, subnode[1], subnode[2]])
                             ghosted[subnode[1]] = value[0].value
                         else:
                             blocks[node.name][key].append(value)
@@ -114,7 +118,7 @@ def createGraph():
         for l in edges['disables']:
             g.edge(block, l[0].value, label='', color="red", fontcolor="red", style='dashed')
         for l in edges['conditional']:
-            g.edge(block, l[0][0].value, color="blue", fontcolor="blue", label=l[1])
+            g.edge(block, l[0][0].value, color="blue", fontcolor="blue", label=l[2])
 
     g.render(filename='result')
     pixmap = QPixmap('result.png')
@@ -129,6 +133,7 @@ def tryRender():
         g.render(filename='result')
         pixmap = QPixmap('result.png')
         label.setPixmap(pixmap)
+        raise e
 
 
 win.resize(800, 600)
