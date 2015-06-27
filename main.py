@@ -3,8 +3,7 @@
 
 import sys
 import os
-from PyQt5.QtGui import *
-from PyQt5.QtCore import QTimer, QObject, pyqtSlot
+from PyQt5.QtCore import QTimer, QObject, pyqtSlot, Qt
 from PyQt5.QtWidgets import (
     QMainWindow, QApplication, QTabWidget, QTextEdit, QWidget, QVBoxLayout,
     QHBoxLayout, QPushButton
@@ -348,6 +347,7 @@ class Window(QMainWindow):
         self.view.page().mainFrame().evaluateJavaScript(script)
         script = '$("a[href=\'main.show/%s\']").addClass("visited")' % block
         self.view.page().mainFrame().evaluateJavaScript(script)
+        self.view.page().mainFrame().setScrollBarValue(Qt.Vertical, self.view.page().mainFrame().scrollBarMaximum(Qt.Vertical));
 
 
 if __name__ == "__main__":
