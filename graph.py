@@ -26,6 +26,8 @@ for root, dirnames, filenames in os.walk('locations'):
         matches.append(os.path.join(root, filename))
 combo = QComboBox()
 combo.addItems(matches)
+if sys.argv[1]:
+    combo.setCurrentText(sys.argv[1])
 
 
 def createGraph():
