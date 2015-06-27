@@ -3,14 +3,14 @@
 
 import sys
 import os
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment
 from jinja2.parser import Parser
 import graphviz as gv
-from PyQt5.QtGui import *
-from PyQt5.QtCore import QTimer, QObject, pyqtSlot
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import (
     QMainWindow, QApplication, QWidget, QVBoxLayout,
-    QHBoxLayout, QComboBox, QLabel
+    QComboBox, QLabel
 )
 import fnmatch
 
@@ -22,8 +22,8 @@ label = QLabel()
 
 matches = []
 for root, dirnames, filenames in os.walk('locations'):
-  for filename in fnmatch.filter(filenames, '*.html'):
-    matches.append(os.path.join(root, filename))
+    for filename in fnmatch.filter(filenames, '*.html'):
+        matches.append(os.path.join(root, filename))
 combo = QComboBox()
 combo.addItems(matches)
 
