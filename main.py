@@ -40,9 +40,10 @@ class TemplateLoader(BaseLoader):
         url = self.base_url + template
         url = url.replace('\\', '/')
         r = requests.get(url)
+        print(url)
         if r.status_code != 200:
             raise TemplateNotFound(template)
-
+        # print(r.text.encode('utf8'))
         content = r.text
         self.cache[url] = datetime.now()
         return content, url, lambda: (datetime.now() - self.cache[url]).seconds > 60*60
@@ -313,7 +314,9 @@ class Window(QMainWindow):
             context = {}
         context.update(self.context)
         self.injectObjects()
-        self.view.setHtml(self.template.render(context))
+        content = self.template.render(context)
+        # print(content)
+        self.view.setContent(content, "text/html; charset=utf-8")
 
     def injectObjects(self):
         self.view.page().mainFrame().addToJavaScriptWindowObject('app', self)
@@ -356,9 +359,10 @@ class Window(QMainWindow):
                 self.template.new_context(self.context)
             )
         ).replace('"', '\\"').replace("'", "\\'").replace('\n', '')
-        script = '$("#visible").append("%s")' % html.strip()
+        script = '$("#visible").append("%s");' % html.strip()
         self.view.page().mainFrame().evaluateJavaScript(script)
-        script = '$("a[href=\'main.show/%s\']").addClass("visited")' % block
+        script = '$("a[href=\'main.show/%s\']").addClass("visited");' % block
+        # self.view.setContent('<script>%s</script>' % script, "text/html; charset=utf-8")
         self.view.page().mainFrame().evaluateJavaScript(script)
         self.view.page().mainFrame().setScrollBarValue(Qt.Vertical, self.view.page().mainFrame().scrollBarMaximum(Qt.Vertical));
 
