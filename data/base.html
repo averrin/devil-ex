@@ -1,74 +1,91 @@
 <html>
 
 <head>
-    <title></title>
-    <meta charset="utf-8" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pnotify/2.0.0/pnotify.all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/css/foundation.min.css">
+  <title></title>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pnotify/2.0.0/pnotify.all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/css/foundation.min.css">
 
-    <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/js/foundation.min.js"></script>
+  <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/js/foundation.min.js"></script>
 
-    <style>
-        body {
-            background-color: #eee;
-            padding: 0;
-        }
+  <style>
+    body {
+      background-color: #eee;
+      padding: 0;
+    }
 
-        .hide {
-            display: none;
-        }
-        a {
-            transition-property: color;
-            transition-duration: .6s;
-            font-weight: bold;
-        }
-        a:hover {
-          color: teal;
-        }
+    .hide {
+      display: none;
+    }
 
-        .visited {
-            color: orangered;
-        }
-        .disabled {
-            color: gray;
-        }
-        .alert {
-          background: #fff;
-        }
-        #visible {
-          padding: 16px;
-        }
-    </style>
+    a {
+      transition-property: color;
+      transition-duration: .6s;
+      font-weight: bold;
+    }
+
+    a:hover {
+      color: teal;
+    }
+
+    .visited {
+      color: orangered;
+    }
+
+    .disabled {
+      color: gray;
+    }
+
+    .alert {
+      background: #fff;
+    }
+
+    #visible {
+      padding: 16px;
+    }
+  </style>
 </head>
 
 <body>
-  <nav class="top-bar" data-topbar role="navigation" data-options="dropdown_autoclose: false">
-  <ul class="title-area">
-    <li class="name">
-      <h1><a href="#" onclick="return false;">Diaboli Ex</a></h1>
-    </li>
-  </ul>
-
-  <section class="top-bar-section">
-    <!-- Right Nav Section -->
-    <ul class="right">
-      <li><a href="#" onclick="return false;" style="font-size: 10pt">Контент: {{META.content_version}} | Движок: {{META.engine_version}}</a></li>
-      <li class="has-dropdown">
-        <a href="javascript://">Меню</a>
-        <ul class="dropdown">
-          <li>{{link('main.restart', 'Начать заново')}}</li>
-          <li>{{link('main.exit', 'Выход')}}</li>
-          <li><a href="averr.in">test</a></li>
-        </ul>
+  <nav class="top-bar" data-topbar="" role="navigation">
+    <ul class="title-area">
+      <li class="name">
+        <h1><a href="#" onclick="return false;">Diaboli Ex</a></h1>
+      </li>
+      <li class="toggle-topbar menu-icon">
+        <a href="">
+          <span>Меню</span>
+        </a>
       </li>
     </ul>
-  </section>
-</nav>
 
-    <div id="visible">
-        {% block main %} {% endblock %}
-    </div>
-    <script type="text/javascript" charset="utf-8" src="https://cdnjs.cloudflare.com/ajax/libs/pnotify/2.0.0/pnotify.all.min.js"></script>
+
+    <section class="top-bar-section">
+
+      <ul class="right hide-for-large-up">
+        <li><a href="#" onclick="return false;" style="font-size: 10pt">Контент: {{META.content_version}} | Движок: {{META.engine_version}}</a></li>
+        <li class="has-dropdown not-click">
+          <a href="#" onclick="return false;">Меню</a>
+          <ul class="dropdown">
+            <li class="title back js-generated">
+              <h5><a href="javascript:void(0)">Back</a></h5>
+            </li>
+            <li class="parent-link hide-for-medium-up"><a class="parent-link js-generated" href="#">Right Dropdown</a></li>
+            <li>{{link('main.restart', 'Начать заново')}}</li>
+            <li>{{link('main.exit', 'Выход')}}</li>
+          </ul>
+        </li>
+      </ul>
+
+    </section>
+  </nav>
+
+
+  <div id="visible">
+    {% block main %} {% endblock %}
+  </div>
+  <script type="text/javascript" charset="utf-8" src="https://cdnjs.cloudflare.com/ajax/libs/pnotify/2.0.0/pnotify.all.min.js"></script>
 </body>
+
 </html>

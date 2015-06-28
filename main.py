@@ -29,7 +29,7 @@ else:
 
 VERSION = semver.format_version(0, 2, 0, 'alpha')
 BASE_URL = 'http://diaboli.averr.in/'
-LOCAL = True
+LOCAL = os.path.isdir(os.path.join(CWD, 'data'))
 if LOCAL:
     BASE_URL = 'http://localhost/'
     DEBUG = True
@@ -99,7 +99,7 @@ class BasicLocation(QObject, object):
 
     @pyqtSlot(str, str)
     def notify(self, title, text):
-        script = u'new PNotify({title: "%s", text: "%s", delay: 800})' % (
+        script = u'new PNotify({title: "%s", text: "%s", delay: 500, nonblock: {nonblock: true,nonblock_opacity: .2}})' % (
             title, text
         )
         self.js(script)
@@ -359,6 +359,15 @@ class Window(QMainWindow):
     @pyqtSlot()
     def exit(self):
         sys.exit()
+
+    @pyqtSlot()
+    def restart(self):
+        achievements = self.world.achievements
+        self.initNewWorld()
+        world = json.load(open(self.worldPath, 'r'))
+        self.world = AttrDict(world)
+        self.saveWorld()
+        self.loadWorld()
 
     @pyqtSlot(str)
     def showBlock(self, block):

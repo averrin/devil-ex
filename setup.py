@@ -1,7 +1,7 @@
 from cx_Freeze import setup, Executable
 import os
 import sys
-includefiles = ['data', 'locations']
+includefiles = [('locations/__init__.py', 'locations/__init__.py')]
 
 base = None
 if sys.platform == "win32":
