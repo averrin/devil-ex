@@ -10,24 +10,18 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtWebKit import QWebSettings
 from PyQt5.QtWebKitWidgets import QWebView, QWebPage
-
 import json
 from attrdict import AttrDict
+from jinja2 import Environment, FileSystemLoader, BaseLoader, TemplateNotFound
+import requests
+import semver
+from datetime import datetime, timedelta
 
 from locations import Locations
-
-from jinja2 import Environment, FileSystemLoader
-import semver
 
 VERSION = semver.format_version(0, 2, 0, 'alpha')
 
 CWD = os.path.abspath(os.path.split(sys.argv[0])[0])
-env = Environment(loader=FileSystemLoader([
-    os.path.join(CWD, 'data'),
-    os.path.join(CWD, 'locations')
-]))
-
-
 app = QApplication(sys.argv)
 
 if 'DEBUG' in os.environ:
@@ -35,6 +29,25 @@ if 'DEBUG' in os.environ:
 else:
     DEBUG = False
 DEBUG = True
+
+
+class TemplateLoader(BaseLoader):
+    def __init__(self, base_url):
+        self.base_url = base_url
+        self.cache = {}
+
+    def get_source(self, environment, template):
+        url = self.base_url + template
+        url = url.replace('\\', '/')
+        r = requests.get(url)
+        if r.status_code != 200:
+            raise TemplateNotFound(template)
+
+        content = r.text
+        self.cache[url] = datetime.now()
+        return content, url, lambda: (datetime.now() - self.cache[url]).seconds > 60*60
+
+env = Environment(loader=TemplateLoader('http://diaboli.averr.in/'))
 
 
 class BasicLocation(QObject, object):
@@ -58,7 +71,7 @@ class BasicLocation(QObject, object):
     def loadPage(self, path, args=None):
         if args is None:
             args = {}
-        path = self.name + '/' + path
+        path = os.path.join('locations', self.name, path)
         self.__app.loadPage(path)
 
     def js(self, script):
@@ -278,7 +291,7 @@ class Window(QMainWindow):
     def loadWorld(self):
         self.locations = Locations(self, self.world, BasicLocation)
         if 'currentLocation' not in self.world:
-            self.loadPage('menu.html')
+            self.loadPage('data/menu.html')
         else:
             self.goTo(self.world.currentLocation)
 
