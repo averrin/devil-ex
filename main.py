@@ -16,6 +16,7 @@ from jinja2 import Environment, BaseLoader, TemplateNotFound
 import requests
 import semver
 from datetime import datetime
+import subprocess
 
 from locations import Locations
 
