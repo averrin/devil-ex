@@ -3,16 +3,16 @@
 <head>
     <title></title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="https://cdn.rawgit.com/mblode/marx/master/css/marx.min.css">
-    <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pnotify/2.0.0/pnotify.all.min.css">
-    <script type="text/javascript" charset="utf-8" src="https://cdnjs.cloudflare.com/ajax/libs/pnotify/2.0.0/pnotify.all.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/css/foundation.min.css">
+
+    <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/js/foundation.min.js"></script>
 
     <style>
         body {
             background-color: #eee;
-            padding: 16px;
+            padding: 0;
         }
 
         .hide {
@@ -28,7 +28,7 @@
         }
 
         .visited {
-            color: teal;
+            color: orangered;
         }
         .disabled {
             color: gray;
@@ -36,12 +36,39 @@
         .alert {
           background: #fff;
         }
+        #visible {
+          padding: 16px;
+        }
     </style>
 </head>
 
 <body>
+  <nav class="top-bar" data-topbar role="navigation" data-options="dropdown_autoclose: false">
+  <ul class="title-area">
+    <li class="name">
+      <h1><a href="#" onclick="return false;">Diaboli Ex</a></h1>
+    </li>
+  </ul>
+
+  <section class="top-bar-section">
+    <!-- Right Nav Section -->
+    <ul class="right">
+      <li><a href="#" onclick="return false;" style="font-size: 10pt">Контент: {{META.content_version}} | Движок: {{META.engine_version}}</a></li>
+      <li class="has-dropdown">
+        <a href="javascript://">Меню</a>
+        <ul class="dropdown">
+          <li>{{link('main.restart', 'Начать заново')}}</li>
+          <li>{{link('main.exit', 'Выход')}}</li>
+          <li><a href="averr.in">test</a></li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+</nav>
+
     <div id="visible">
         {% block main %} {% endblock %}
     </div>
+    <script type="text/javascript" charset="utf-8" src="https://cdnjs.cloudflare.com/ajax/libs/pnotify/2.0.0/pnotify.all.min.js"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 from cx_Freeze import setup, Executable
 import os
 import sys
-includefiles = ['locations', 'data']
+includefiles = ['data', 'locations']
 
 base = None
 if sys.platform == "win32":

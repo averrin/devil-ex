@@ -19,8 +19,6 @@ from datetime import datetime, timedelta
 
 from locations import Locations
 
-VERSION = semver.format_version(0, 2, 0, 'alpha')
-
 CWD = os.path.abspath(os.path.split(sys.argv[0])[0])
 app = QApplication(sys.argv)
 
@@ -28,7 +26,15 @@ if 'DEBUG' in os.environ:
     DEBUG = os.environ['DEBUG'].lower() in ('true', 'yes', '1')
 else:
     DEBUG = False
-DEBUG = True
+
+VERSION = semver.format_version(0, 2, 0, 'alpha')
+BASE_URL = 'http://diaboli.averr.in/'
+LOCAL = True
+if LOCAL:
+    BASE_URL = 'http://localhost/'
+    DEBUG = True
+
+META = requests.get(BASE_URL + '/data/meta.json').json()
 
 
 class TemplateLoader(BaseLoader):
@@ -43,12 +49,11 @@ class TemplateLoader(BaseLoader):
         print(url)
         if r.status_code != 200:
             raise TemplateNotFound(template)
-        # print(r.text.encode('utf8'))
         content = r.text
         self.cache[url] = datetime.now()
         return content, url, lambda: (datetime.now() - self.cache[url]).seconds > 60*60
 
-env = Environment(loader=TemplateLoader('http://diaboli.averr.in/'))
+env = Environment(loader=TemplateLoader(BASE_URL))
 
 
 class BasicLocation(QObject, object):
@@ -121,6 +126,8 @@ class Window(QMainWindow):
 
         home = os.path.expanduser('~')
         self.worldPath = os.path.join(home, '.diaboli-ex.json')
+        self.cwd = CWD
+        self.local = LOCAL
 
         if os.path.isfile(self.worldPath):
             world = json.load(open(self.worldPath, 'r'))
@@ -140,7 +147,10 @@ class Window(QMainWindow):
         world['version'] = VERSION
         self.world = AttrDict(world)
         self.saveWorld()
-        self.achievements = json.load(open(os.path.join(CWD, 'data', 'achievements.json'), 'r', encoding='utf8'))
+        if self.local:
+            self.achievements = json.load(open(os.path.join(CWD, 'data', 'achievements.json'), 'r', encoding='utf8'))
+        else:
+            self.achievements = requests.get(BASE_URL + 'data/achievements.json').json()
 
         self.tabs = QTabWidget()
         self.view = QWebView(self)
@@ -248,7 +258,9 @@ class Window(QMainWindow):
             'set': set,
             'action': action,
             'achieve': achieve,
-            'checkpoint': checkpoint
+            'checkpoint': checkpoint,
+            'VERSION': VERSION,
+            'META': META
         }
         self.loadWorld()
 
@@ -290,7 +302,7 @@ class Window(QMainWindow):
         self.loadWorld()
 
     def loadWorld(self):
-        self.locations = Locations(self, self.world, BasicLocation)
+        self.locations = Locations(self, BASE_URL, self.world, BasicLocation)
         if 'currentLocation' not in self.world:
             self.loadPage('data/menu.html')
         else:
@@ -316,7 +328,8 @@ class Window(QMainWindow):
         self.injectObjects()
         content = self.template.render(context)
         # print(content)
-        self.view.setContent(content, "text/html; charset=utf-8")
+        # self.view.setContent(content, "text/html; charset=utf-8")
+        self.view.setHtml(content)
 
     def injectObjects(self):
         self.view.page().mainFrame().addToJavaScriptWindowObject('app', self)
