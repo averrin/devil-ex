@@ -48,6 +48,7 @@
 </head>
 
 <body>
+  <div class="sticky">
   <nav class="top-bar" data-topbar="" role="navigation">
     <ul class="title-area">
       <li class="name">
@@ -85,6 +86,7 @@
               <h5><a href="javascript:void(0)">Back</a></h5>
             </li>
             <li class="parent-link hide-for-medium-up"><a class="parent-link js-generated" href="#">Right Dropdown</a></li>
+            <li><a href="javascript:void(0)">{{ progress() }}% контента открыто</a></li>
             <li>{{link('main.restart', 'Начать заново')}}</li>
             <li>{{link('main.exit', 'Выход')}}</li>
           </ul>
@@ -93,6 +95,7 @@
 
     </section>
   </nav>
+</div>
 
 
   <div id="visible">

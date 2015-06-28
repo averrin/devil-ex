@@ -1,5 +1,5 @@
 ;!@Install@!UTF-8!
-Title="Diaboli Ex v0.2.0-alpha"
-BeginPrompt="Do you want to install Diaboli Ex v0.2.0-alpha?"
+Title="Diaboli Ex v0.2.0"
+BeginPrompt="Do you want to install Diaboli Ex v0.2.0?"
 RunProgram="build\exe.win-amd64-3.4\main.exe"
 ;!@InstallEnd@!

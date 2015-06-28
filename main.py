@@ -258,6 +258,9 @@ class Window(QMainWindow):
                 self.world.locations[self.world.currentLocation][key] = value
             return '<!--//-->'
 
+        def progress():
+            return round((self.world.showed_blocks / META['total_blocks']) * 100)
+
         self.context = {
             'world': self.world,
             'link': link,
@@ -268,7 +271,8 @@ class Window(QMainWindow):
             'achieve': achieve,
             'checkpoint': checkpoint,
             'VERSION': VERSION,
-            'META': META
+            'META': META,
+            'progress': progress
         }
         self.loadWorld()
 
