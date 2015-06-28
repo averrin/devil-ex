@@ -64,7 +64,20 @@
     <section class="top-bar-section">
 
       <ul class="right hide-for-large-up">
-        <li><a href="#" onclick="return false;" style="font-size: 10pt">Контент: {{META.content_version}} | Движок: {{META.engine_version}}</a></li>
+        <li>
+          {%if META.engine_version == VERSION%}
+            <a href="#" onclick="return false;" style="font-size: 10pt">Контент: {{META.content_version}} | Движок: {{META.engine_version}}</a>
+          {%else%}
+            <style media="screen">
+              a[href="update/"]{
+                font-size: 10pt !important;
+                color: orange !important;
+                font-weight:bold !important;
+              }
+            </style>
+            {{link('main.update', 'Доступна новая версия: ' + META.engine_version)}}
+          {%endif%}
+        </li>
         <li class="has-dropdown not-click">
           <a href="#" onclick="return false;">Меню</a>
           <ul class="dropdown">

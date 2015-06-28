@@ -27,7 +27,7 @@ if 'DEBUG' in os.environ:
 else:
     DEBUG = False
 
-VERSION = semver.format_version(0, 2, 0, 'alpha')
+VERSION = semver.format_version(0, 2, 0)
 BASE_URL = 'http://diaboli.averr.in/'
 LOCAL = os.path.isdir(os.path.join(CWD, 'data'))
 if LOCAL:
@@ -41,17 +41,24 @@ class TemplateLoader(BaseLoader):
     def __init__(self, base_url):
         self.base_url = base_url
         self.cache = {}
+        self.base = ''
 
     def get_source(self, environment, template):
-        url = self.base_url + template
-        url = url.replace('\\', '/')
-        r = requests.get(url)
-        print(environment, url)
-        if r.status_code != 200:
-            raise TemplateNotFound(template)
-        content = r.text
-        self.cache[url] = datetime.now()
-        return content, url, lambda: (datetime.now() - self.cache[url]).seconds > 60*60
+
+        def fetch(template):
+            url = self.base_url + template
+            url = url.replace('\\', '/')
+            r = requests.get(url)
+            print(environment, url)
+            if r.status_code != 200:
+                raise TemplateNotFound(template)
+            content = r.text
+            if url not in self.cache:
+                self.cache[url] = datetime.now()
+            return content, url
+
+        content, url = fetch(template)
+        return content, url, lambda: (datetime.now() - self.cache[url]).seconds < 60*60
 
 env = Environment(loader=TemplateLoader(BASE_URL))
 
@@ -273,7 +280,8 @@ class Window(QMainWindow):
                 'persons': {},
                 'launches': 0,
                 'checkpoint': '',
-                'version': VERSION
+                'version': VERSION,
+                'showed_blocks': 0
             }, wf)
 
     def updateEditor(self):
@@ -370,9 +378,23 @@ class Window(QMainWindow):
         self.saveWorld()
         self.loadWorld()
 
+    @pyqtSlot()
+    def update(self):
+        url = BASE_URL
+        if sys.platform=='win32':
+            os.startfile(url)
+        elif sys.platform=='darwin':
+            subprocess.Popen(['open', url])
+        else:
+            try:
+                subprocess.Popen(['xdg-open', url])
+            except OSError:
+                print('Please open a browser on: %s' % url)
+
     @pyqtSlot(str)
     def showBlock(self, block):
         self.context['player'] = self.world.player
+        self.world['showed_blocks'] += 1
         if block in self.displayedBlocks:
             return
         else:
