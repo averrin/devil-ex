@@ -9,13 +9,13 @@ from PyQt5.QtWidgets import (
     QHBoxLayout, QPushButton
 )
 from PyQt5.QtWebKit import QWebSettings
-from PyQt5.QtWebKitWidgets import QWebView, QWebPage
+from PyQt5.QtWebKitWidgets import QWebView
 import json
 from attrdict import AttrDict
-from jinja2 import Environment, FileSystemLoader, BaseLoader, TemplateNotFound
+from jinja2 import Environment, BaseLoader, TemplateNotFound
 import requests
 import semver
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from locations import Locations
 
@@ -46,7 +46,7 @@ class TemplateLoader(BaseLoader):
         url = self.base_url + template
         url = url.replace('\\', '/')
         r = requests.get(url)
-        print(url)
+        print(environment, url)
         if r.status_code != 200:
             raise TemplateNotFound(template)
         content = r.text
@@ -218,7 +218,7 @@ class Window(QMainWindow):
             )
 
         def action(action, *args):
-            a = link(action, *args)
+            # a = link(action, *args)
             script = 'currentLocation.%s(%s);' % (action, ",".join(["'%s'" % a for a in args]))
             script = '<script>$(document).ready(function(){%s});</script>' % script
             return script
@@ -365,6 +365,7 @@ class Window(QMainWindow):
         achievements = self.world.achievements
         self.initNewWorld()
         world = json.load(open(self.worldPath, 'r'))
+        world['achievements'] = achievements
         self.world = AttrDict(world)
         self.saveWorld()
         self.loadWorld()
