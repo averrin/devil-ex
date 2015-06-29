@@ -26,7 +26,7 @@ for root, dirnames, filenames in os.walk('locations'):
         matches.append(os.path.join(root, filename))
 combo = QComboBox()
 combo.addItems(matches)
-if sys.argv[1]:
+if len(sys.argv) >= 2:
     filename = os.path.split(sys.argv[1])
     filename = list(filter(lambda x: x.endswith(filename), matches))[0]
     combo.setCurrentText(filename)
@@ -54,7 +54,6 @@ def createGraph():
             elif n.node.name == 'checkpoint':
                 return 'label', n.args
 
-
     for node in nodes:
         name = type(node).__name__
         if name == 'Block':
@@ -67,7 +66,11 @@ def createGraph():
                 elif type(b).__name__ == 'If':
                     test = b.test
                     if type(test).__name__ == 'Compare':
-                        conditional.append([b.body[0].nodes, test.expr.attr, '%s %s %s' % (test.expr.attr, test.ops[0].op, test.ops[0].expr.value)])
+                        conditional.append([b.body[0].nodes, test.expr.attr, '%s %s %s' % (
+                            test.expr.attr,
+                            test.ops[0].op,
+                            test.ops[0].expr.value
+                        )])
                     elif type(test).__name__ == 'Getattr':
                         conditional.append([b.body[0].nodes, test.attr, '%s == True' % test.attr])
                     elif type(test).__name__ == 'Test':
@@ -90,6 +93,15 @@ def createGraph():
                         else:
                             blocks[node.name][key].append(value)
 
+    drawNodes(g, blocks, ghosted)
+    drawEdges(g, blocks)
+
+    g.render(filename='result')
+    pixmap = QPixmap('result.png')
+    label.setPixmap(pixmap)
+
+
+def drawNodes(g, blocks, ghosted):
     for block in blocks.keys():
         color = None
         if blocks[block]['calls']:
@@ -108,7 +120,15 @@ def createGraph():
                     args = [a.value for a in s]
                     labeltext.append(args[0] + '.' + args[1] + '=' + str(args[2]))
                     if args[1] in ghosted.keys():
-                        g.edge(block, ghosted[args[1]], color="blue", arrowhead="none", style='dashed', fontcolor="blue", label=args[1])
+                        g.edge(
+                            block,
+                            ghosted[args[1]],
+                            color="blue",
+                            arrowhead="none",
+                            style='dashed',
+                            fontcolor="blue",
+                            label=args[1]
+                        )
 
                 labeltext = ', '.join(labeltext)
             if not labeltext:
@@ -117,6 +137,9 @@ def createGraph():
                 g.node(block, style='filled', xlabel=labeltext, fillcolor="lightblue")
             else:
                 g.node(block, style='filled', xlabel=labeltext)
+
+
+def drawEdges(g, blocks):
     for block, edges in blocks.items():
         for l in edges['links']:
             g.edge(block, l[0].value, label=l[1].value, arrowhead='open')
@@ -125,9 +148,6 @@ def createGraph():
         for l in edges['conditional']:
             g.edge(block, l[0][0].value, color="blue", fontcolor="blue", label=l[2])
 
-    g.render(filename='result')
-    pixmap = QPixmap('result.png')
-    label.setPixmap(pixmap)
 
 def tryRender():
     try:

@@ -32,7 +32,7 @@ VERSION = semver.format_version(0, 2, 0)
 BASE_URL = 'http://diaboli.averr.in/'
 LOCAL = os.path.isdir(os.path.join(CWD, 'data'))
 if LOCAL:
-    BASE_URL = 'http://localhost/'
+    BASE_URL = 'http://book.dev/'
     DEBUG = True
 
 META = requests.get(BASE_URL + '/data/meta.json').json()
@@ -107,7 +107,8 @@ class BasicLocation(QObject, object):
 
     @pyqtSlot(str, str)
     def notify(self, title, text):
-        script = u'new PNotify({title: "%s", text: "%s", delay: 500, nonblock: {nonblock: true,nonblock_opacity: .2}})' % (
+        script = u'new PNotify({title: "%s", text: "%s", delay: 500, nonblock: {nonblock: true,nonblock_opacity: .2}})'
+        script = script % (
             title, text
         )
         self.js(script)
@@ -162,17 +163,10 @@ class Window(QMainWindow):
 
         self.tabs = QTabWidget()
         self.view = QWebView(self)
-        # self.view.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
-        # self.view.page().linkClicked.connect(self.click)
 
         self.view.page().mainFrame().javaScriptWindowObjectCleared.connect(self.injectObjects)
 
         self.editor = QTextEdit()
-
-        # self.saveTimer = QTimer()
-        # self.saveTimer.timeout.connect(self.saveWorld)
-        # self.saveTimer.start(5000)
-
         editPanel = QWidget()
         editPanel.setLayout(QVBoxLayout())
         editPanel.layout().addWidget(self.editor)
@@ -187,22 +181,14 @@ class Window(QMainWindow):
         editPanel.layout().addWidget(buttonPanel)
 
         if DEBUG:
-            self.updateEditor()
-            self.timer = QTimer()
-            self.timer.timeout.connect(self.updateEditor)
-            self.timer.start(1000)
-
-            self.tabs.addTab(self.view, 'Game')
-            self.tabs.addTab(editPanel, 'Editor')
-
-            self.view.page().settings().setAttribute(
-                QWebSettings.DeveloperExtrasEnabled,
-                True
-            )
-            self.setCentralWidget(self.tabs)
+            self.showEditor()
         else:
             self.setCentralWidget(self.view)
 
+        self.createContext()
+        self.loadWorld()
+
+    def createContext(self):
         def link(action, *args):
             if args:
                 text = args[-1]
@@ -274,7 +260,21 @@ class Window(QMainWindow):
             'META': META,
             'progress': progress
         }
-        self.loadWorld()
+
+    def showEditor(self):
+        self.updateEditor()
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.updateEditor)
+        self.timer.start(1000)
+
+        self.tabs.addTab(self.view, 'Game')
+        self.tabs.addTab(editPanel, 'Editor')
+
+        self.view.page().settings().setAttribute(
+            QWebSettings.DeveloperExtrasEnabled,
+            True
+        )
+        self.setCentralWidget(self.tabs)
 
     def initNewWorld(self):
         with open(self.worldPath, 'w') as wf:
@@ -386,9 +386,9 @@ class Window(QMainWindow):
     @pyqtSlot()
     def update(self):
         url = BASE_URL
-        if sys.platform=='win32':
+        if sys.platform == 'win32':
             os.startfile(url)
-        elif sys.platform=='darwin':
+        elif sys.platform == 'darwin':
             subprocess.Popen(['open', url])
         else:
             try:
@@ -414,7 +414,10 @@ class Window(QMainWindow):
         script = '$("a[href=\'main.show/%s\']").addClass("visited");' % block
         # self.view.setContent('<script>%s</script>' % script, "text/html; charset=utf-8")
         self.view.page().mainFrame().evaluateJavaScript(script)
-        self.view.page().mainFrame().setScrollBarValue(Qt.Vertical, self.view.page().mainFrame().scrollBarMaximum(Qt.Vertical));
+        self.view.page().mainFrame().setScrollBarValue(
+            Qt.Vertical,
+            self.view.page().mainFrame().scrollBarMaximum(Qt.Vertical)
+        )
 
 
 if __name__ == "__main__":
