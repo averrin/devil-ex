@@ -21,6 +21,7 @@
     Где-то там должен быть Сэм. Хорошо бы сначала расспросить его, перед тем как подниматься наверх.
   </p>
 {% endblock %}
+
 {%block near_building%}
   {{disable('people')}}
   <p>
@@ -36,8 +37,10 @@
   </p>
   {% endif %}
 {% endblock %}
+
 {%block for_sam%}
 {% endblock %}
+
 {%block to_building%}
   {{link('toBuilding', 'Войти')}}
 {% endblock %}
