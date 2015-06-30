@@ -166,20 +166,6 @@ class Window(QMainWindow):
 
         self.view.page().mainFrame().javaScriptWindowObjectCleared.connect(self.injectObjects)
 
-        self.editor = QTextEdit()
-        editPanel = QWidget()
-        editPanel.setLayout(QVBoxLayout())
-        editPanel.layout().addWidget(self.editor)
-        buttonPanel = QWidget()
-        buttonPanel.setLayout(QHBoxLayout())
-        self.applyButton = QPushButton('Apply')
-        self.applyButton.clicked.connect(self.applyWorld)
-        self.reloadButton = QPushButton('Apply && Reload')
-        self.reloadButton.clicked.connect(self.reloadWorld)
-        buttonPanel.layout().addWidget(self.applyButton)
-        buttonPanel.layout().addWidget(self.reloadButton)
-        editPanel.layout().addWidget(buttonPanel)
-
         if DEBUG:
             self.showEditor()
         else:
@@ -267,6 +253,20 @@ class Window(QMainWindow):
         self.timer.timeout.connect(self.updateEditor)
         self.timer.start(1000)
 
+        self.editor = QTextEdit()
+        editPanel = QWidget()
+        editPanel.setLayout(QVBoxLayout())
+        editPanel.layout().addWidget(self.editor)
+        buttonPanel = QWidget()
+        buttonPanel.setLayout(QHBoxLayout())
+        self.applyButton = QPushButton('Apply')
+        self.applyButton.clicked.connect(self.applyWorld)
+        self.reloadButton = QPushButton('Apply && Reload')
+        self.reloadButton.clicked.connect(self.reloadWorld)
+        buttonPanel.layout().addWidget(self.applyButton)
+        buttonPanel.layout().addWidget(self.reloadButton)
+        editPanel.layout().addWidget(buttonPanel)
+
         self.tabs.addTab(self.view, 'Game')
         self.tabs.addTab(editPanel, 'Editor')
 
@@ -340,7 +340,6 @@ class Window(QMainWindow):
         context.update(self.context)
         self.injectObjects()
         content = self.template.render(context)
-        # print(content)
         # self.view.setContent(content, "text/html; charset=utf-8")
         self.view.setHtml(content)
 

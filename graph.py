@@ -35,8 +35,7 @@ if len(sys.argv) >= 2:
 
 def createGraph():
     g = gv.Digraph(format='png')
-    parser = Parser(env, open(combo.currentText(), 'r', encoding='utf8').read())
-    nodes = parser.subparse()
+    nodes = Parser(env, open(combo.currentText(), 'r', encoding='utf8').read()).subparse()
 
     blocks = {}
     ghosted = {}
@@ -55,8 +54,7 @@ def createGraph():
                 return 'label', n.args
 
     for node in nodes:
-        name = type(node).__name__
-        if name == 'Block':
+        if type(node).__name__ == 'Block':
             subnodes = []
             conditional = []
             blocks[node.name] = {'links': [], 'disables': [], 'label': [], 'calls': [], 'conditional': []}
@@ -97,8 +95,7 @@ def createGraph():
     drawEdges(g, blocks)
 
     g.render(filename='result')
-    pixmap = QPixmap('result.png')
-    label.setPixmap(pixmap)
+    label.setPixmap(QPixmap('result.png'))
 
 
 def drawNodes(g, blocks, ghosted):
@@ -123,10 +120,10 @@ def drawNodes(g, blocks, ghosted):
                         g.edge(
                             block,
                             ghosted[args[1]],
-                            color="blue",
-                            arrowhead="none",
+                            color='blue',
+                            arrowhead='none',
                             style='dashed',
-                            fontcolor="blue",
+                            fontcolor='blue',
                             label=args[1]
                         )
 
@@ -134,7 +131,7 @@ def drawNodes(g, blocks, ghosted):
             if not labeltext:
                 labeltext = ''
             if block in ghosted.values():
-                g.node(block, style='filled', xlabel=labeltext, fillcolor="lightblue")
+                g.node(block, style='filled', xlabel=labeltext, fillcolor='lightblue')
             else:
                 g.node(block, style='filled', xlabel=labeltext)
 
@@ -144,9 +141,9 @@ def drawEdges(g, blocks):
         for l in edges['links']:
             g.edge(block, l[0].value, label=l[1].value, arrowhead='open')
         for l in edges['disables']:
-            g.edge(block, l[0].value, label='', color="red", fontcolor="red", style='dashed')
+            g.edge(block, l[0].value, label='', color='red', fontcolor='red', style='dashed')
         for l in edges['conditional']:
-            g.edge(block, l[0][0].value, color="blue", fontcolor="blue", label=l[2])
+            g.edge(block, l[0][0].value, color='blue', fontcolor='blue', label=l[2])
 
 
 def tryRender():
@@ -154,7 +151,7 @@ def tryRender():
         createGraph()
     except Exception as e:
         g = gv.Digraph(format='png')
-        g.node('Error: %s' % e, style='filled', fillcolor='red', shape="rect")
+        g.node('Error: %s' % e, style='filled', fillcolor='red', shape='rect')
         g.render(filename='result')
         pixmap = QPixmap('result.png')
         label.setPixmap(pixmap)
